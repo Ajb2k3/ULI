@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title> {ULI} - Lego Dacta Interface B - Blocky Editor</title>
+  <script src="blockly.min.js"></script>
+  <script src="python_compressed.js"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; }
+    #header { background: #d32f2f; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+    #blocklyDiv { height: 80vh; width: 100%; }
+    #codeOutput { height: 15vh; width: 100%; background: #222; color: #0f0; padding: 10px; overflow-y: scroll; font-family: monospace; }
+    .btn { padding: 10px 20px; cursor: pointer; background: #fff; border: none; font-weight: bold; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h2> {ULI} - Lego Dacta Interface B Control</h2>
+  <div>
+    <button class="btn" onclick="showPython()">Generate Python</button>
+    <button class="btn" style="background: #4CAF50; color: white;" onclick="runCode()">Run Program</button>
+    <button class="btn" style="background: #ff0000; color: white;" onclick="emergencyStop()">EMERGENCY STOP</button>
+    <button class="btn" onclick="workspace.cleanUp()">Clean Up</button>
+  </div>
+</div>
+
+<div id="blocklyDiv"></div>
+<pre id="codeOutput"># Python backend code will appear here...</pre>
+
+<xml id="toolbox" style="display: none">
+  <category name="Interface B" colour="#d32f2f">
+    <block type="interface_b_init"></block>
+    <block type="interface_b_output">
+      <value name="POWER">
+        <shadow type="math_number"><field name="NUM">7</field></shadow>
+      </value>
+    </block>
+    <block type="interface_b_sensor"></block>
+    <block type="interface_b_wait">
+      <value name="SECONDS">
+        <shadow type="math_number"><field name="NUM">1</field></shadow>
+      </value>
+    </block>
+  </category>
+  <sep></sep>
+  <category name="Logic" colour="#5b80a5">
+    <block type="controls_if"></block>
+    <block type="logic_compare"></block>
+    <block type="logic_operation"></block>
+  </category>
+  <category name="Loops" colour="#5ba55b">
+    <block type="controls_repeat_ext"></block>
+    <block type="controls_whileUntil"></block>
+  </category>
+  <category name="Math" colour="#5b67a5">
+    <block type="math_number"></block>
+    <block type="math_arithmetic"></block>
+  </category>
+  <category name="Variables" colour="#a55b80" custom="VARIABLE"></category>
+</xml>
+
+<script>
+// 1. Define Custom Blocks
+Blockly.defineBlocksWithJsonArray([
+  {
+    "type": "interface_b_init",
+    "message0": "Initialize Interface B on Port %1",
+    "args0": [{ "type": "field_input", "name": "PORT", "text": "/dev/ttyUSB0" }],
+    "nextStatement": null,
+    "colour": 0,
+    "tooltip": "Setup connection to the Dacta Interface B"
+  },
+  {
+    "type": "interface_b_output",
+    "message0": "Set Output %1 Power %2 Direction %3",
+    "args0": [
+      { "type": "field_dropdown", "name": "OUT", "options": [["0", "0"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["6", "6"], ["7", "7"]] },
+      { "type": "input_value", "name": "POWER", "check": "Number" },
+      { "type": "field_dropdown", "name": "DIR", "options": [["Forward", "1"], ["Backward", "2"], ["Off", "0"]] }
+    ],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 230
+  },
+  {
+    "type": "interface_b_sensor",
+    "message0": "Read Sensor %1",
+    "args0": [{ "type": "field_dropdown", "name": "PORT", "options": [["0", "0"], ["1", "1"], ["2", "2"], ["3", "3"]] }],
+    "output": "Number",
+    "colour": 120
+  },
+  {
+    "type": "interface_b_wait",
+    "message0": "Wait %1 seconds",
+    "args0": [{ "type": "input_value", "name": "SECONDS", "check": "Number" }],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 160
+  },
+  {
+    "type": "interface_b_stop_all",
+    "message0": "STOP ALL MOTORS",
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 0,
+    "tooltip": "Immediately turns off all motors and lamps."
+  },
+
+]);
+
+// 2. Python Code Generators
+javascriptGenerator = python.pythonGenerator;
+
+javascriptGenerator.forBlock['interface_b_init'] = function(block) {
+  var port = block.getFieldValue('PORT');
+  return `import serial, time\niface = InterfaceB('${port}')\n`;
+};
+
+javascriptGenerator.forBlock['interface_b_output'] = function(block, generator) {
+  var out = block.getFieldValue('OUT');
+  var pwr = generator.valueToCode(block, 'POWER', javascriptGenerator.Order.ATOMIC);
+  var dir = block.getFieldValue('DIR');
+  return `iface.set_output(${out}, ${pwr}, ${dir})\n`;
+};
+
+javascriptGenerator.forBlock['interface_b_sensor'] = function(block) {
+  var port = block.getFieldValue('PORT');
+  return [`iface.get_sensor(${port})`, javascriptGenerator.Order.ATOMIC];
+};
+
+javascriptGenerator.forBlock['interface_b_wait'] = function(block, generator) {
+  var sec = generator.valueToCode(block, 'SECONDS', javascriptGenerator.Order.ATOMIC);
+  return `time.sleep(${sec})\n`;
+};
+
+javascriptGenerator.forBlock['interface_b_stop_all'] = function(block) {
+  return `iface.stop_all()\n`;
+};
+
+// 3. Inject Workspace
+// 3. Inject Workspace with Grid and Controls
+var workspace = Blockly.inject('blocklyDiv', { 
+  toolbox: document.getElementById('toolbox'),
+  // GRID SETTINGS
+  grid: {
+    spacing: 25,      // The distance between dots
+    length: 3,       // The size of the dots
+    colour: '#ccc',  // The color of the grid
+    snap: true       // This makes blocks "jump" to the grid lines
+  },
+  // MOVEMENT & ZOOM SETTINGS
+  move: {
+    scrollbars: {
+      horizontal: true,
+      vertical: true
+    },
+    drag: true,
+    wheel: true
+  },
+  zoom: {
+    controls: true,
+    wheel: true,
+    startScale: 1.0,
+    maxScale: 3,
+    minScale: 0.3,
+    scaleSpeed: 1.2
+  },
+  trashcan: true 
+});
+
+function showPython() {
+  var code = javascriptGenerator.workspaceToCode(workspace);
+  document.getElementById('codeOutput').innerText = code;
+}
+
+function runCode() {
+  var code = javascriptGenerator.workspaceToCode(workspace);
+  
+  fetch('/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Program sent to Interface B');
+    document.getElementById('codeOutput').innerText = "Running...\n" + code;
+  });
+}
+function emergencyStop() {
+  fetch('/stop', { method: 'POST' });
+  alert("Stop command sent!");
+}
+</script>
+</body>
+</html>
