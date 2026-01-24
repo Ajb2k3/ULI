@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title> {ULI} - Lego Dacta Interface B - Blocky Editor</title>
+  <script src="blockly.min.js"></script>
+  <script src="python_compressed.js"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; }
+    #header { background: #d32f2f; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+    #blocklyDiv { height: 80vh; width: 100%; }
+    #codeOutput { height: 15vh; width: 100%; background: #222; color: #0f0; padding: 10px; overflow-y: scroll; font-family: monospace; }
+    .btn { padding: 10px 20px; cursor: pointer; background: #fff; border: none; font-weight: bold; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+  <header id="top-bar">
+    <div class="brand">
+      <h1>{ULI} - Lego Dacta Control</h1>
+    </div>
+    <div class="actions">
+      <select id="portSelector"><option>Select Interface Port...</option></select>
+      <button id="btnRun" class="primary-btn">RUN</button>
+      <button id="btnStop" class="stop-btn">STOP</button>
+    </div>
+  </header>
+
+  <div id="main-content">
+    <div id="blocklyDiv"></div>
+
+    <aside id="sidebar">
+      <div class="sidebar-label">Python Code</div>
+      <pre id="pythonOutput"># Drag blocks to generate code...</pre>
+    </aside>
+  </div>
+</div>
+
+  <script type="module" src="Index.js"></script>
+</body>
+</html>
