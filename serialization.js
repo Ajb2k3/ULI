@@ -46,13 +46,33 @@ export const initSerialization = () => {
     return [code, order];
   };
 
-  // Fix for interface_b_output
-  pythonGenerator.forBlock['interface_b_output'] = function(block) {
-    const out = block.getFieldValue('OUT');
-    const pwr = pythonGenerator.valueToCode(block, 'POWER', pythonGenerator.Order ? pythonGenerator.Order.ATOMIC : 0) || '0';
-    const dir = block.getFieldValue('DIR');
-    return `iface.set_output(${out}, ${pwr}, ${dir})\n`;
-  };
+// Register the generator for the Output block
+pythonGenerator.forBlock['interface_b_output'] = function(block, generator) {
+  // Get the value from the 'VALUE' input (the hole where you snap blocks in)
+  const value = generator.valueToCode(block, 'VALUE', pythonGenerator.ORDER_ATOMIC) || "''";
+  
+  // Generate the Python code (e.g., printing to Interface B's serial port)
+  // Assuming your serial object is named 'ser'
+  return `ser.write(str(${value}).encode() + '\\n')\n`;
+};
+};
+
+pythonGenerator.forBlock['interface_b_init'] = function(block) {
+  const code = `import serial
+import time
+
+# Setup Serial Connection
+ser = serial.Serial(
+    port='/dev/cu.PL2303G-USBtoUART2420'
+)
+
+# Handshake with Interface B
+msg = b'p\\0###Do you byte, when I knock?$$$'
+ser.write(msg)
+print("Sending Handshake...")
+print(ser.read(31))\n`;
+
+  return code;
 };
 
   pythonGenerator.forBlock['interface_b_stop_all'] = function() {
@@ -76,12 +96,19 @@ pythonGenerator.forBlock['interface_b_stop_all'] = function(block) {
 };
 
 pythonGenerator.forBlock['add_text'] = function(block) {
-  const text = block.getFieldValue('TEXT');
-  // This adds a print statement to the Python code
-  return `print("${text}")\n`;
+  // Use valueToCode to get the text from the connected 'TEXT' block
+  const text = pythonGenerator.valueToCode(block, 'TEXT', pythonGenerator.ORDER_ATOMIC) || "''";
+  
+  // This will generate: print("your text here")
+  return `print(${text})\n`;
 };
 
 pythonGenerator.forBlock['wait_seconds'] = function(block) {
   const seconds = block.getFieldValue('SECONDS');
   return `time.sleep(${seconds})\n`;
+};
+pythonGenerator.forBlock['interface_b_forever'] = function(block) {
+  const branch = pythonGenerator.statementToCode(block, 'DO');
+  // Adding a tiny 0.01s sleep prevents the serial port from crashing
+  return 'while True:\n' + (branch || '  pass\n') + '  time.sleep(0.01)\n';
 };

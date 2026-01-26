@@ -1,144 +1,91 @@
-/* Ensure the app takes up the full screen */
-html, body, #layout-container {
-  height: 100%;
-  width: 100%;
+/* 1. Basic Reset */
+html, body {
+  height: 100vh; 
+  width: 100vw;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden; /* Stops double scrollbars */
 }
 
-header {
-  height: 30px; /* Example height */
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: #d32f2f;
-  color: white;
-}
-
-/* 1. Make the wrapper a Flexbox */
-#main-content {
-  display: flex;         /* THIS IS THE KEY: it puts items side-by-side */
-  flex-direction: row;   /* Ensures left-to-right alignment */
-  height: 100vh;         /* Replace height: 100vh with this: */
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow: hidden;
-}
-
-/* 2. Tell Blockly to take up most of the space */
-#blocklyDiv {
-  flex: 3;
-  height: 100%;
-  width: 100%;
-  min-height: 0; /* Critical for Safari flexbox shrinking */
-  min-width: 0;  /* Critical for Safari flexbox shrinking */
-  position: relative;
-}
-
-#sidebar {
-  flex: 1; /* Occupies roughly 25-30% of the width */
-  height: 100%;
-  background-colour: #000000; /* Dark "VS Code" style background */
-  color: #dcdcdc;
-  display: flex;
-  flex-direction: column;
-  border-left: 2px solid #333;
-}
-
-.sidebar-label {
-  background: #1a1a1a; /* Slightly lighter black for the header */
-  padding: 10px;
-  font-size: 11px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #888; /* Dim grey label */
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-bottom: 1px solid #333;
-}
-.sidebar-header {
-  padding: 10px;
-  background: #252526;
-  border-bottom: 1px solid #333;
-  font-size: 0.9rem;
-  color: #858585;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-
-/* 4. The Green Text Logic */
-#pythonOutput {
-  flex: 1;
-  background-color: #000000 !important;
-  color: #00FF00; !important; /* Force Neon Green */
-  font-family: 'Courier New', monospace;
-  padding: 15px;
-  margin: 0;
-  float: right;
-  white-space: pre-wrap;
-  overflow-y: auto;
-}
-
-#layout-container {
+body {
   display: flex;
   flex-direction: column;
 }
 
-#menu-bar {
+.header-bar {
   background: #2c3e50;
   color: white;
-  padding: 10px 20px;
+  padding: 10px;
+  flex: 0 0 auto; /* Header stays at its natural height */
+}
+
+header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+#main-container {
   display: flex;
-  justify-content: space-between;
+  flex: 1 1 auto; /* This forces the container to fill the rest of the window */
+  height: 100%;   /* Critical for Safari */
+  width: 100%;
+}
+
+#blocklyDiv {
+  flex: 1; 
+  height: 100% !important; /* Ensure it doesn't collapse */
+  width: 100%;
+}
+
+/* The box that holds both the title and the code */
+#console-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+  background-color: #1e1e1e;
+  border-left: 2px solid #333;
+  height: 100%; /* Fills the vertical space */
+}
+
+/* The actual Title Bar */
+#console-title {
+  background-color: #333;
+  color: #888;
+  padding: 5px 15px;
+  font-family: sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between; /* Pushes title left, button right */
   align-items: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border-bottom: 1px solid #444;
 }
 
-#workspace-wrapper {
-  display: flex;
-  flex: 1; /* Fills remaining height */
-  overflow: hidden;
-}
-
-/* Scrollbar styling for a cleaner look on black */
-#pythonOutput::-webkit-scrollbar {
-  width: 8px;
-}
-#pythonOutput::-webkit-scrollbar-track {
-  background: #000;
-}
-#pythonOutput::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
-}
-
-/* Button Styling */
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
+#btnClear {
+  background: #444;
+  color: #ccc;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 10px;
   cursor: pointer;
-  font-weight: 600;
-  margin-left: 10px;
+  text-transform: uppercase;
 }
 
-// Force an immediate resize once the window finishes loading
-setTimeout(() => {
-  Blockly.svgResize(workspace);
-}, 100);
+#btnClear:hover {
+  background: #555;
+  color: white;
+}
 
-// Keep it responsive if you resize the browser window
-window.addEventListener('resize', () => {
-  Blockly.svgResize(workspace);
-});
-
-// .primary { background: #27ae60; color: white; }
-// .danger { background: #e74c3c; color: white; }
-.btn:hover { opacity: 0.9; }
-// .btn { padding: 10px 20px; cursor: pointer; background: #fff; border: none; font-weight: bold; border-radius: 4px; }
-.btnstop { background: #ff0000;}
+/* The Code Area */
+#pythonOutput {
+  flex: 1 1 auto; /* Fills the rest of the wrapper */
+  margin: 0;
+  padding: 15px;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: pre;
+  overflow-y: auto; /* Scroll code if it gets too long */
+  overflow-x: hidden;
+}

@@ -1,27 +1,34 @@
 import * as Blockly from 'blockly';
 import { pythonGenerator } from 'blockly/python';
 import 'blockly/blocks';
-
-// This is the standard way to load the built-in block generators in NPM
 import 'blockly/python'; 
-
-// IMPORTANT: If you use "Logic" or "Math" blocks from the toolbox, 
-// they need the generator. Use this to ensure they are loaded:
 import { libraryBlocks } from 'blockly/blocks';
 import { toolbox } from './toolbox.js';
 import { initSerialization } from './serialization.js';
+import './index.css';
 
-// Initialize serialization (Adam Bryant's Python logic)
-initSerialization();
+const interfaceTheme = Blockly.Theme.defineTheme('interfaceTheme', {
+  'base': Blockly.Themes.Classic,
+  'categoryStyles': {
+    'logic_category': { 'colour': '210' },
+    'loop_category': { 'colour': '120' },
+    'math_category': { 'colour': '230' },
+    'text_category': { 'colour': '160' },
+    'list_category': { 'colour': '260' },
+    'variable_category': { 'colour': '330' },
+    'procedure_category': { 'colour': '290' },
+    'interface_category': { 'colour': '160' } // Your custom teal color
+  },
+  'startHats': true,
+});
 
 // Inject Workspace
 const workspace = Blockly.inject('blocklyDiv', {
-  
-toolbox: toolbox,
+  toolbox: toolbox,
   grid: { spacing: 25, length: 3, colour: '#ccc', snap: true },
   move: { scrollbars: true, drag: true, wheel: true },
   zoom: { controls: true, wheel: true, startScale: 1.0 },
-  trashcan: true
+  trashcan: true,
 });
 
 // ADD THIS BOX TO FORCE RESIZE:
@@ -39,16 +46,34 @@ workspace.addChangeListener(() => {
 });
 
 // Port Scanning Logic (for Safari/Mac compatibility)
+let port;
+let writer;
+
 window.scanPorts = async () => {
-    try {
-        const res = await fetch('http://127.0.0.1:5000/list_ports');
-        const data = await res.json();
-        const selector = document.getElementById('portSelector');
-        selector.innerHTML = data.ports.map(p => `<option value="${p}">${p}</option>`).join('');
-    } catch (e) {
-        alert("Flask server not found. Is app.py running?");
+if (navigator.serial) {  
+ try {
+    // 1. Request the port (Browser will show a popup)
+    port = await navigator.serial.requestPort();
+    
+    // 2. Open the port
+    await port.open({ baudRate: 9600 }); // Interface B usually likes 9600
+    
+    // 3. Set up a writer to send data
+    const encoder = new TextEncoder();
+    const writableStream = port.writable;
+    writer = writableStream.getWriter();
+
+    alert("Interface B Connected!");
+    document.getElementById('btnScan').innerText = "Connected ✅";
+ } catch (e) {
+      console.log("User cancelled port selection");
     }
+  } else {
+    alert("Web Serial is blocked. Are you using http://localhost?");
+  }
 };
+
+
 // Function to update the side panel
 function updateCodePreview() {
   // Generate the Python code using the pythonGenerator
@@ -71,7 +96,18 @@ updateCodePreview();
 
 // --- 1. Block Definitions ---
 Blockly.defineBlocksWithJsonArray([
-  {
+{
+  "type": "interface_b_init",
+  "message0": "Initialise Interface B",
+  "nextStatement": null, // No 'previous' because it's a starter block
+  "colour": 20,
+  "style": {
+    "hat": "cap" // This creates the "Hat" shape
+  },
+  "tooltip": "Connects to the Serial port and wakes up the hardware.",
+  "helpUrl": ""
+},  
+{
     "type": "add_text",
     "message0": "Add Note %1",
     "args0": [{
@@ -138,25 +174,71 @@ Blockly.defineBlocksWithJsonArray([
   "nextStatement": null,
   "colour": 120
 },
+{
+  "type": "interface_b_forever",
+  "message0": "repeat forever %1 %2",
+  "args0": [
+    { "type": "input_dummy" },
+    { "type": "input_statement", "name": "DO" }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 120,
+  "tooltip": "Runs the blocks inside forever (while True)."
+},
+
 ]); // <--- ONLY CLOSE THE ARRAY HERE (Line 75 area)
 
 // Hook up the buttons
 document.getElementById('btnScan').addEventListener('click', window.scanPorts);
-document.getElementById('btnRun').addEventListener('click', () => {
+document.getElementById('btnRun').addEventListener('click', async () => {
   const code = pythonGenerator.workspaceToCode(workspace);
-  
-  console.log("Sending code to Interface B...");
 
-  fetch('http://localhost:5000/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: code })
-  })
-  .then(response => response.json())
-  .then(data => console.log("Hardware Response:", data.status))
-  .catch(err => console.error("Is the Python server running?", err));
+  if (!writer) {
+    alert("Please click 'Scan Ports' (Connect) first!");
+    return;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    // We send the code + a newline to tell the hardware to execute
+    await writer.write(encoder.encode(code + "\r\n"));
+    console.log("Code sent via Web Serial!");
+  } catch (err) {
+    console.error("Write error:", err);
+  }
 });
+
 document.getElementById('btnStop').addEventListener('click', () => {
   fetch('http://localhost:5000/stop', { method: 'POST' })
     .then(() => console.log("Emergency Stop Sent"));
+});
+
+// Function to update the side panel
+function updatePython() {
+  const code = pythonGenerator.workspaceToCode(workspace);
+  const output = document.getElementById('pythonOutput');
+  if (output) {
+    output.innerText = code || "# Drag blocks to see code...";
+  }
+}
+
+// Attach the listener once
+workspace.addChangeListener(updatePython);
+
+// Force resize and initial code preview
+window.addEventListener('load', () => {
+  Blockly.svgResize(workspace);
+  updatePython();
+});
+
+window.addEventListener('resize', () => {
+  Blockly.svgResize(workspace);
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  const output = document.getElementById('pythonOutput');
+  if (output) {
+    output.innerText = "# Console cleared. Move a block to refresh...";
+  }
 });

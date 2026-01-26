@@ -11,72 +11,15 @@ You probably don't need every single block, and should consider either rewriting
 your toolbox from scratch, or carefully choosing whether you need each block
 listed here.
 */
-// Interface B blocks
+
 export const toolbox = {
-   kind: 'categoryToolbox',
-   contents: [
+  kind: 'categoryToolbox',
+  contents: [
     {
       kind: 'category',
-      name: 'Interface_B',
-      categorystyle: 'interface_category',
+      name: 'Logic',
+      categorystyle: 'logic_category',
       contents: [
-        {
-      "kind": "category",
-      "name": "Control",
-      "colour": "120",
-      "contents": [
-       
-       {
-         kind: 'block',
-         type: 'wait_seconds',
-        },
-      ],
-    },
-        {
-           kind: 'block',
-           type: 'interface_b_init',
-        },
-        { 
-          kind: 'block',
-          type: 'interface_b_forever',
-        },	
-        { 
-	  kind: 'block',
-	  type: 'Wake_up', 
-	},
-	{
-          kind: 'block',
-          type: 'controls_if',
-  	  inputs: {
-    	    IF0: {
-                block: {
-       		  type: 'logic_compare',
-        	  fields: { 'OP': 'LT' },
-        	  inputs: {
-       	  	 'A': { 'block': { 'type': 'interface_b_input' } },
-          	 'B': { 'block': { 'type': 'math_number', 'fields': { 'NUM': 100 } } }
-      	  	},
-     	   },
-         },
-       },
-     },
-	{ 
-	  kind: 'block',
-	  type: 'interface_b_output' 
-	},
-        { 
-	  kind: 'block',
-	  type: 'interface_b_stop_all' 
-	},
-      ],
-    },
-
-// Logic Blocks
-    {
-        kind: 'category',
-        name: 'Logic',
-        categorystyle: 'logic_category',
-        contents: [
         {
           kind: 'block',
           type: 'controls_if',
@@ -107,7 +50,6 @@ export const toolbox = {
         },
       ],
     },
-// Loop Blocks
     {
       kind: 'category',
       name: 'Loops',
@@ -171,11 +113,10 @@ export const toolbox = {
         },
       ],
     },
-//Maths blocks
     {
       kind: 'category',
       name: 'Math',
-      colour: '230',
+      categorystyle: 'math_category',
       contents: [
         {
           kind: 'block',
@@ -378,17 +319,12 @@ export const toolbox = {
         },
       ],
     },
-// Text blocks
     {
       kind: 'category',
       name: 'Text',
-      colour: '160',
+      categorystyle: 'text_category',
       contents: [
         {
-	  kind: 'block',
-	  type: 'add_text',
-	},
-	{
           kind: 'block',
           type: 'text',
         },
@@ -571,11 +507,10 @@ export const toolbox = {
         },
       ],
     },
-// List Blocks    
     {
       kind: 'category',
       name: 'Lists',
-      colour: '260',
+      categorystyle: 'list_category',
       contents: [
         {
           kind: 'block',
@@ -678,18 +613,16 @@ export const toolbox = {
     {
       kind: 'sep',
     },
-//Variable Blocks
     {
       kind: 'category',
       name: 'Variables',
-      colour: '330',
+      categorystyle: 'variable_category',
       custom: 'VARIABLE',
     },
-//Function Blocks
     {
       kind: 'category',
       name: 'Functions',
-      colour: '290',
+      categorystyle: 'procedure_category',
       custom: 'PROCEDURE',
     },
   ],

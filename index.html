@@ -6,28 +6,25 @@
   </head>
 
 <body>
-  <div id="app-container">
-  <header id="top-bar">
-    <div class="brand">
-      <h1>{ULI} - Lego Dacta Control</h1>
-    </div>
-    <div class="actions">
-      <button id="btnScan">SCAN FOR INTERFACE B</button>
-      <select id="portSelector"><option>Select Interface Port...</option></select>
-      <button id="btnRun" class="primary-btn">RUN</button>
-      <button id="btnStop" class="stop-btn">STOP</button>
+  <header class="header-bar">
+    <h1>Interface B Developer</h1>
+    <div class="controls">
+      <select id="portSelector"></select>
+      <button id="btnScan">Scan Ports</button>
+      <button id="btnRun">Run Code</button>
+      <button id="btnStop">Stop</button>
     </div>
   </header>
 
-  <div id="main-content" style="display: flex; flex-direction: row; height: 100vh;">
-  
-    <div id="blocklyDiv" style="flex: 3; height: 100%;"></div>
-
-    <aside id="sidebar">
-        <div class="sidebar-label">Python Console</div>
-        <pre id="pythonOutput"># Code will appear here...</pre>
-    </aside>
-
+  <div id="main-container">
+    <div id="blocklyDiv"></div>
+ <div id="console-wrapper">
+  <div id="console-title">
+    <span>PYTHON OUTPUT</span>
+    <button id="btnClear">Clear</button>
+  </div>
+  <pre id="pythonOutput"># Code will appear here...</pre>
 </div>
+  </div>
 </body>
 </html>

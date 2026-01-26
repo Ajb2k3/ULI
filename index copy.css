@@ -1,0 +1,148 @@
+/* Ensure the app takes up the full screen */
+html, body, #layout-container {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  flex-direction: column;
+}
+
+header {
+  height: 60px; /* Example height */
+  top: 0;
+  width: 100%;
+  background: #333;
+  color: white;
+  padding: 10px 20px;
+  flex: 0 0 auto; /* Keeps it at the top */
+}
+
+/* This fixes your header/title bar */
+.top-bar {
+  background-color: #333; /* Change from red to a dark grey */
+  color: white;
+  padding: 10px 20px;
+  flex: 0 0 auto; /* Keeps it at the top */
+}
+
+/* 1. Make the wrapper a Flexbox */
+#main-content {
+  display: flex;         /* THIS IS THE KEY: it puts items side-by-side */
+  flex-direction: row;   /* Ensures left-to-right alignment */
+  display: flex;
+  flex: 1 1 auto;
+  height: 100%;
+  height: 100vh;         /* Replace height: 100vh with this: */
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+
+/* 2. Tell Blockly to take up most of the space */
+#blocklyDiv {
+  flex: 3;
+  height: 100%;
+  width: 100%;
+  min-height: 0; /* Critical for Safari flexbox shrinking */
+  min-width: 0;  /* Critical for Safari flexbox shrinking */
+  position: relative;
+}
+
+#sidebar {
+  flex: 1; /* Occupies roughly 25-30% of the width */
+  height: 100%;
+  background-colour: #000000; /* Dark "VS Code" style background */
+  color: #dcdcdc;
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid #333;
+}
+
+.sidebar-label {
+  background: #1a1a1a; /* Slightly lighter black for the header */
+  padding: 10px;
+  font-size: 11px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #888; /* Dim grey label */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #333;
+}
+.sidebar-header {
+  padding: 10px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  font-size: 0.9rem;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+
+/* 4. The Green Text Logic */
+#pythonOutput {
+  flex: 1;
+  background-color: #1e1e1e; /* Dark charcoal */
+  color: #00ff00;            /* Classic Matrix green */
+  padding: 15px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  height: 500px;
+  overflow-y: auto;          /* Scrollbar for long code */
+  white-space: pre;
+}
+
+#layout-container {
+  display: flex;
+  flex-direction: column;
+}
+
+#menu-bar {
+  background: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#workspace-wrapper {
+  display: flex;
+  flex: 1; /* Fills remaining height */
+  overflow: hidden;
+}
+
+/* Scrollbar styling for a cleaner look on black */
+#pythonOutput::-webkit-scrollbar {
+  width: 8px;
+}
+#pythonOutput::-webkit-scrollbar-track {
+  background: #000;
+}
+#pythonOutput::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+/* Button Styling */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+.primary { background: #27ae60; color: white; }
+.danger { background: #e74c3c; color: white; }
+.btn:hover { opacity: 0.9; }
+.btn { padding: 10px 20px; cursor: pointer; background: #000; border: none; font-weight: bold; border-radius: 4px; }
