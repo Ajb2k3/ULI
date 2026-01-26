@@ -11,7 +11,7 @@ You probably don't need every single block, and should consider either rewriting
 your toolbox from scratch, or carefully choosing whether you need each block
 listed here.
 */
-
+// Interface B blocks
 export const toolbox = {
    kind: 'categoryToolbox',
    contents: [
@@ -19,22 +19,21 @@ export const toolbox = {
       kind: 'category',
       name: 'Interface_B',
       categorystyle: 'logic_category',
-      colour: '0',
       contents: [
         {
-  "kind": "category",
-  "name": "Control",
-  "colour": "120",
-  "contents": [
-    {
-      "kind": "block",
-      "type": "wait_seconds"
+      "kind": "category",
+      "name": "Control",
+      "colour": "120",
+      "contents": [
+        {
+         kind: 'block',
+         type: 'wait_seconds',
+        },
+      ],
     },
-  ],
-},
 	{ 
 	  kind: 'block',
-	  type: 'Wake_up' 
+	  type: 'Wake_up', 
 	},
 	{
           kind: 'block',
@@ -62,6 +61,8 @@ export const toolbox = {
 	},
       ],
     },
+
+// Logic Blocks
     {
         kind: 'category',
         name: 'Logic',
@@ -97,6 +98,7 @@ export const toolbox = {
         },
       ],
     },
+// Loop Blocks
     {
       kind: 'category',
       name: 'Loops',
@@ -160,6 +162,7 @@ export const toolbox = {
         },
       ],
     },
+//Maths blocks
     {
       kind: 'category',
       name: 'Math',
@@ -366,6 +369,7 @@ export const toolbox = {
         },
       ],
     },
+// Text blocks
     {
       kind: 'category',
       name: 'Text',
@@ -558,6 +562,7 @@ export const toolbox = {
         },
       ],
     },
+// List Blocks    
     {
       kind: 'category',
       name: 'Lists',
@@ -664,12 +669,14 @@ export const toolbox = {
     {
       kind: 'sep',
     },
+//Variable Blocks
     {
       kind: 'category',
       name: 'Variables',
       categorystyle: 'variable_category',
       custom: 'VARIABLE',
     },
+//Function Blocks
     {
       kind: 'category',
       name: 'Functions',

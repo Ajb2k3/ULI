@@ -1,76 +1,48 @@
 /* Ensure the app takes up the full screen */
 html, body, #layout-container {
   height: 100%;
+  width: 100%;
   margin: 0;
+  padding: 0;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+header {
+  height: 30px; /* Example height */
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: #d32f2f;
+  color: white;
 }
 
 /* 1. Make the wrapper a Flexbox */
 #main-content {
   display: flex;         /* THIS IS THE KEY: it puts items side-by-side */
   flex-direction: row;   /* Ensures left-to-right alignment */
-  height: 100vh;         /* Makes it fill the whole screen height */
-  width: 100vw;
+  height: 100vh;         /* Replace height: 100vh with this: */
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   overflow: hidden;
 }
 
 /* 2. Tell Blockly to take up most of the space */
 #blocklyDiv {
-  flex: 3;               /* Takes 75% of the width */
+  flex: 3;
   height: 100%;
-}
-
-/* 3. Style the Sidebar and keep it at 25% */
-#sidebar {
-  flex: 1;               /* Takes 25% of the width */
-  background-color: #000000 !important; /* Force Black */
-  display: flex;
-  flex-direction: column;
-  border-left: 2px solid #333;
-}
-
-/* 4. The Green Text Logic */
-#pythonOutput {
-  flex: 1;
-  background-color: #000000 !important;
-  color: #00FF00; !important; /* Force Neon Green */
-  font-family: 'Courier New', monospace;
-  padding: 20px;
-  margin: 0;
-  float: right;
-  white-space: pre-wrap;
-  overflow-y: auto;
-}
-
-#layout-container {
-  display: flex;
-  flex-direction: column;
-}
-
-#menu-bar {
-  background: #2c3e50;
-  color: white;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-#workspace-wrapper {
-  display: flex;
-  flex: 1; /* Fills remaining height */
-  overflow: hidden;
-}
-
-#blocklyDiv {
-  flex: 3; /* Workspace takes 75% width */
-  height: 90%;
+  width: 100%;
+  min-height: 0; /* Critical for Safari flexbox shrinking */
+  min-width: 0;  /* Critical for Safari flexbox shrinking */
+  position: relative;
 }
 
 #sidebar {
   flex: 1; /* Occupies roughly 25-30% of the width */
+  height: 100%;
   background-colour: #000000; /* Dark "VS Code" style background */
   color: #dcdcdc;
   display: flex;
@@ -98,6 +70,41 @@ html, body, #layout-container {
   letter-spacing: 1px;
 }
 
+
+/* 4. The Green Text Logic */
+#pythonOutput {
+  flex: 1;
+  background-color: #000000 !important;
+  color: #00FF00; !important; /* Force Neon Green */
+  font-family: 'Courier New', monospace;
+  padding: 15px;
+  margin: 0;
+  float: right;
+  white-space: pre-wrap;
+  overflow-y: auto;
+}
+
+#layout-container {
+  display: flex;
+  flex-direction: column;
+}
+
+#menu-bar {
+  background: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#workspace-wrapper {
+  display: flex;
+  flex: 1; /* Fills remaining height */
+  overflow: hidden;
+}
+
 /* Scrollbar styling for a cleaner look on black */
 #pythonOutput::-webkit-scrollbar {
   width: 8px;
@@ -120,6 +127,18 @@ html, body, #layout-container {
   margin-left: 10px;
 }
 
-.primary { background: #27ae60; color: white; }
-.danger { background: #e74c3c; color: white; }
+// Force an immediate resize once the window finishes loading
+setTimeout(() => {
+  Blockly.svgResize(workspace);
+}, 100);
+
+// Keep it responsive if you resize the browser window
+window.addEventListener('resize', () => {
+  Blockly.svgResize(workspace);
+});
+
+// .primary { background: #27ae60; color: white; }
+// .danger { background: #e74c3c; color: white; }
 .btn:hover { opacity: 0.9; }
+// .btn { padding: 10px 20px; cursor: pointer; background: #fff; border: none; font-weight: bold; border-radius: 4px; }
+.btnstop { background: #ff0000;}

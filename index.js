@@ -24,6 +24,11 @@ toolbox: toolbox,
   trashcan: true
 });
 
+// ADD THIS BOX TO FORCE RESIZE:
+window.addEventListener('resize', () => {
+  Blockly.svgResize(workspace);
+}, false);
+
 // Update Python preview in real-time
 workspace.addChangeListener(() => {
   const code = pythonGenerator.workspaceToCode(workspace);
@@ -83,7 +88,7 @@ Blockly.defineBlocksWithJsonArray([
     "message0": "Wake Up Interface B",
     "previousStatement": null,
     "nextStatement": null,
-    "colour": 160
+    "colour": 160,
   }, // <--- COMMA HERE
   {
     "type": "interface_b_output",
