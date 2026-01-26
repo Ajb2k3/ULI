@@ -3,6 +3,7 @@
 This archive is for my Work In Progress version of Google Blockly designed to allow the reuse of older Lego computer controlled devices.
 I am currently working on the lego Dacta Interface B as this has the simplest of control software to run.
 
+Does not work in Apple safari as it is missing re Web.serial function.
 
 
 Installation instructions.
