@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{ULI} - Stable Version</title>
+    <script src="blockly_compressed.js"></script>
+    <script src="blocks_compressed.js"></script>
+    <script src="python_compressed.js"></script>
+    <script src="en.js"></script>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+    <style>
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: -apple-system, sans-serif; overflow: hidden; background: #2c3e50; }
+        #header { height: 55px; padding: 0 20px; background: #1a252f; display: flex; align-items: center; justify-content: space-between; color: white; border-bottom: 2px solid #27ae60; }
+        #btnRun { padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        #mainContainer { display: flex; flex-grow: 1; height: calc(100vh - 55px); background: #fff; }
+        #blocklyDiv { flex: 1; height: 100%; }
+        #sidebar { width: 380px; background: #ecf0f1; border-left: 1px solid #bdc3c7; display: flex; flex-direction: column; }
+        #pythonOutput { flex: 1; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; background: white; white-space: pre-wrap; overflow: auto; }
+        #consolePanel { height: 250px; padding: 12px; background: #2f3640; color: #44bd32; font-family: monospace; font-size: 11px; overflow-y: auto; }
+        
+        /* CSS Icon Fixes */
+        .blocklyTrash img, .blocklyZoom img { display: none !important; }
+        .blocklyTrash { background: #eee !important; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+        .blocklyTrash::after { content: "🗑️"; font-size: 24px; }
+        .blocklyTreeIcon { display: none !important; }
+        .blocklyTreeRow { height: 30px !important; line-height: 30px !important; }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <strong>{ULI} UNIVERSAL LEGO INTERFACE</strong>
+        <button id="btnRun">RUN SCRIPT</button>
+    </div>
+
+    <div id="mainContainer">
+        <div id="blocklyDiv"></div>
+        <div id="sidebar">
+            <div style="padding:10px; background:#dcdde1; font-size:11px; font-weight:bold;">GENERATED PYTHON</div>
+            <div id="pythonOutput"></div>
+            <div style="padding:10px; background:#dcdde1; font-size:11px; font-weight:bold;">HARDWARE CONSOLE</div>
+            <div id="consolePanel">Ready...<br></div>
+        </div>
+    </div>
+
+    <script>
+    // Manually define translations to avoid missing %BKY labels
+    function injectTranslations() {
+        const m = Blockly.Msg;
+        m["LOGIC_HUE"] = "210"; m["LOOPS_HUE"] = "120"; m["MATH_HUE"] = "230";
+        m["CONTROLS_IF_MSG_IF"] = "if"; m["CONTROLS_IF_MSG_THEN"] = "then"; m["CONTROLS_IF_MSG_ELSE"] = "else";
+        m["CONTROLS_REPEAT_TITLE"] = "repeat %1 times";
+        m["LOGIC_COMPARE_TOOLTIP_EQ"] = "Equal to";
+        m["VARIABLES_DEFAULT_NAME"] = "item";
+    }
+
+    function defineCustomBlocks() {
+        Blockly.defineBlocksWithJsonArray([
+            { "type": "interface_b_init", "message0": "Initialise Interface B", "nextStatement": null, "colour": 20, "style": { "hat": "cap" } },
+            {
+                "type": "interface_b_output",
+                "message0": "Motor %1 Dir %2",
+                "args0": [
+                    { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"]] },
+                    { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Backward","0x95"],["Off","0x90"]] }
+                ],
+                "previousStatement": null, "nextStatement": null, "colour": 0
+            }
+        ]);
+    }
+
+    function setupBlockly() {
+        injectTranslations();
+        defineCustomBlocks();
+
+        // The Toolbox Definition using a structured JSON format
+        const toolboxJson = {
+            "kind": "categoryToolbox",
+            "contents": [
+                { "kind": "category", "name": "Lego", "colour": "20", "contents": [
+                    { "kind": "block", "type": "interface_b_init" },
+                    { "kind": "block", "type": "interface_b_output" }
+                ]},
+                { "kind": "category", "name": "Logic", "colour": "210", "contents": [
+                    { "kind": "block", "type": "controls_if" },
+                    { "kind": "block", "type": "logic_compare" }
+                ]},
+                { "kind": "category", "name": "Loops", "colour": "120", "contents": [
+                    { "kind": "block", "type": "controls_repeat_ext" }
+                ]},
+                { "kind": "category", "name": "Math", "colour": "230", "contents": [
+                    { "kind": "block", "type": "math_number" }
+                ]},
+                { "kind": "category", "name": "Variables", "custom": "VARIABLE", "colour": "330" }
+            ]
+        };
+
+        const workspace = Blockly.inject('blocklyDiv', {
+            toolbox: toolboxJson,
+            scrollbars: true,
+            trashcan: true,
+            renderer: 'geras'
+        });
+
+        const generator = python.pythonGenerator;
+
+        // FIXED GENERATOR OUTPUT
+        generator.forBlock['interface_b_init'] = function(block) {
+            return "import serial\nser = serial.Serial('/dev/cu.PL2303G-USBtoUART2420', timeout=1)\nser.write(b'p\\0###Do you byte, when I knock?$$$')\nser.read(19)\nprint(ser.read(19))\n";
+        };
+
+        generator.forBlock['interface_b_output'] = function(block) {
+            const dir = block.getFieldValue('DIR').replace('0x', '\\x');
+            const out = block.getFieldValue('OUT').replace('0x', '\\x');
+            return `ser.write(b'${dir}${out}')\n`;
+        };
+
+        workspace.addChangeListener(() => {
+            // Satisfaction of the modern VariableMap request happens automatically here
+            document.getElementById('pythonOutput').innerText = generator.workspaceToCode(workspace);
+        });
+
+        if (typeof qt !== 'undefined') {
+            new QWebChannel(qt.webChannelTransport, (channel) => { window.backend = channel.objects.backend; });
+        }
+
+        document.getElementById('btnRun').onclick = () => {
+            if (window.backend) window.backend.execute_python(generator.workspaceToCode(workspace));
+        };
+
+        window.logToConsole = (msg) => {
+            const cp = document.getElementById('consolePanel');
+            cp.innerHTML += "> " + msg + "<br>";
+            cp.scrollTop = cp.scrollHeight;
+        };
+    }
+
+    window.onload = setupBlockly;
+    </script>
+</body>
+</html>
