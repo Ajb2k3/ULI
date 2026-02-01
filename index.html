@@ -42,18 +42,28 @@
     </div>
 
     <script>
-// Add this at the very top of your <script>
+    // --- 1. ROBUST LOGGING ---
+// --- 1. ROBUST LOGGING (THE "INNERHTML" FIX) ---
 window.logToConsole = function(message) {
+    // SHIELD: Ignore Blockly internal objects (like events)
+    if (message && typeof message === 'object' && message.type) return;
+
     const panel = document.getElementById('consolePanel');
     if (panel) {
-        // Create a new line for each message
-        const line = document.createElement('div');
-        line.textContent = "> " + message;
-        panel.appendChild(line);
-        // Auto-scroll to the bottom
+        // We use innerHTML + escape to avoid the "Node" type error entirely
+        const safeMessage = String(message)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        // Add the line as a simple string, not a 'Node' object
+        panel.innerHTML += "<div>> " + safeMessage + "</div>";
+        
+        // Auto-scroll
         panel.scrollTop = panel.scrollHeight;
     }
 };
+
     function injectTranslations() {
         const m = Blockly.Msg;
         m["CONTROLS_IF_MSG_IF"] = "if"; m["CONTROLS_IF_MSG_THEN"] = "then"; m["CONTROLS_IF_MSG_ELSE"] = "else";
@@ -74,8 +84,8 @@ window.logToConsole = function(message) {
                 "type": "interface_b_output",
                 "message0": "Motor %1 Dir %2",
                 "args0": [
-                    { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"]] },
-                    { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Backward","0x95"],["Off","0x90"]] }
+                    { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"],["E","0x10"],["F","0x20"],["G","0x40"],["H","0x80"]] },
+                    { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Reverse","0x95"],["Off","0x90"],["Polarity Left","0x94"],["Polarity Right","0x93"],["Speed 1","0xB0"],["Speed 2","0xB1"],["Speed 3","0xB2"],["Speed 4","0xB3"],["Speed 5","0xB6"],["Speed 6","0xB7"]] }
                 ],
                 "previousStatement": null, "nextStatement": null, "colour": 0
             },
@@ -101,7 +111,7 @@ window.logToConsole = function(message) {
         const toolboxJson = {
             "kind": "categoryToolbox",
             "contents": [
-                { "kind": "category", "name": "LEGO", "colour": "20", "contents": [
+                { "kind": "category", "name": "Interface B", "colour": "20", "contents": [
                     { "kind": "block", "type": "interface_b_init" },
                     { "kind": "block", "type": "interface_b_output" },
                     { "kind": "block", "type": "interface_b_read" },
@@ -122,18 +132,19 @@ window.logToConsole = function(message) {
         const workspace = Blockly.inject('blocklyDiv', { toolbox: toolboxJson, sounds: false, renderer: 'geras' });
         const generator = python.pythonGenerator;
 
-generator.forBlock['interface_b_init'] = function(block) {
-    return "import serial, time\nif 'ser' not in globals():\n" +
-           "    ser = serial.Serial('/dev/cu.PL2303G-USBtoUART2420', 9600, timeout=0)\n" +
-           "    ser.write(b'p\\0###Do you byte, when I knock?$$$')\n" +
-           "def safe_read():\n" +
-           "    try:\n" +
-           "        if 'ser' in globals() and ser.in_waiting >= 31:\n" +
-           "            raw = ser.read(31)\n" +
-           "            return raw # This returns the actual bytes object\n" + 
-           "        return b''\n" +
-           "    except: return b''\n";
-};
+        // --- GENERATORS ---
+        generator.forBlock['interface_b_init'] = function(block) {
+            return "import serial, time\nif 'ser' not in globals():\n" +
+                   "    ser = serial.Serial('/dev/cu.PL2303G-USBtoUART2420', 9600, timeout=0)\n" +
+                   "    ser.write(b'p\\0###Do you byte, when I knock?$$$')\n" +
+                   "def safe_read():\n" +
+                   "    try:\n" +
+                   "        if 'ser' in globals() and ser.in_waiting >= 31:\n" +
+                   "            raw = ser.read(31)\n" +
+                   "            return raw\n" + 
+                   "        return b''\n" +
+                   "    except: return b''\n";
+        };
 
         generator.forBlock['interface_b_output'] = function(block) {
             const dir = block.getFieldValue('DIR').replace('0x', '\\x');
@@ -142,7 +153,6 @@ generator.forBlock['interface_b_init'] = function(block) {
         };
 
         generator.forBlock['interface_b_read'] = function(block) {
-            // Calling the safe_read function which returns a STRING (Hex)
             return ["safe_read()", 0];
         };
 
@@ -150,25 +160,41 @@ generator.forBlock['interface_b_init'] = function(block) {
             return `time.sleep(${block.getFieldValue('SEC')})\n`;
         };
 
-        workspace.addChangeListener(() => {
-            document.getElementById('pythonOutput').innerText = generator.workspaceToCode(workspace);
-        });
+        // --- LISTENERS ---
+        // --- 2. LISTENERS (THE "SILENCE" FIX) ---
+workspace.addChangeListener((event) => {
+    // Only trigger if a block actually changed or moved.
+    // This stops the crash when just clicking the "Wait" block.
+    if (event.type === Blockly.Events.BLOCK_MOVE || 
+        event.type === Blockly.Events.BLOCK_CHANGE || 
+        event.type === Blockly.Events.BLOCK_CREATE || 
+        event.type === Blockly.Events.BLOCK_DELETE) {
 
+        try {
+            const code = generator.workspaceToCode(workspace);
+            const outputDiv = document.getElementById('pythonOutput');
+            if (outputDiv) {
+                outputDiv.innerText = code;
+            }
+        } catch (e) {
+            console.warn("Live update skipped to prevent crash");
+        }
+    }
+});
+
+        // --- BRIDGE ---
         if (typeof qt !== 'undefined') {
-            new QWebChannel(qt.webChannelTransport, (channel) => { window.backend = channel.objects.backend; });
+            new QWebChannel(qt.webChannelTransport, (channel) => { 
+                window.backend = channel.objects.backend; 
+            });
         }
 
-        // Find your existing btnRun logic and update it to this:
-document.getElementById('btnRun').onclick = () => {
-    if (window.backend) {
-        // Clear the console for the new run
-        document.getElementById('consolePanel').innerHTML = "<b>--- Executing ---</b><br>";
-        // Send the code
-        window.backend.execute_python(generator.workspaceToCode(workspace));
-    } else {
-        console.error("Python backend not found!");
-    }
-};
+        document.getElementById('btnRun').onclick = () => {
+            if (window.backend) {
+                document.getElementById('consolePanel').innerHTML = "<b>--- Executing ---</b><br>";
+                window.backend.execute_python(generator.workspaceToCode(workspace));
+            }
+        };
     }
 
     window.onload = setupBlockly;
