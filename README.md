@@ -21,3 +21,16 @@ I've hit a block with this that i'm calling the Admaril Ackbar fault because the
 ## Update 01 - Febuary - 2026 
 
 You can view and example of it running here - https://youtube.com/shorts/FvEhMnCWDJY?feature=share
+
+## RPI installation
+
+Run the following commands on the RPI:
+
+Sudo apt get update and sudo apt upgrade
+run sudo apt install nodejs npm
+pip3 install pyqt6
+pip3 install pyserial
+mkdir ULI
+sudo git clone https://github.com/Ajb2k3/ULI.git
+
+Navigate to folder.
