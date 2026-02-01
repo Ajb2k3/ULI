@@ -29,6 +29,7 @@
     <div id="header">
         <strong>{ULI} UNIVERSAL LEGO INTERFACE</strong>
         <button id="btnRun">RUN SCRIPT</button>
+	<button id="btnReset" style="padding: 10px 15px; background: #c0392b; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px;">NEW PROJECT</button>
     </div>
 
     <div id="mainContainer">
@@ -42,162 +43,225 @@
     </div>
 
     <script>
-    // --- 1. ROBUST LOGGING ---
-// --- 1. ROBUST LOGGING (THE "INNERHTML" FIX) ---
-window.logToConsole = function(message) {
-    // SHIELD: Ignore Blockly internal objects (like events)
-    if (message && typeof message === 'object' && message.type) return;
+   // --- 1. GLOBAL VARIABLES ---
+let saveTimer = null;
 
+// --- 2. ROBUST LOGGING ---
+window.logToConsole = function(message) {
+    if (message && typeof message === 'object' && message.type) return;
     const panel = document.getElementById('consolePanel');
     if (panel) {
-        // We use innerHTML + escape to avoid the "Node" type error entirely
-        const safeMessage = String(message)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-        // Add the line as a simple string, not a 'Node' object
+        const safeMessage = String(message).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         panel.innerHTML += "<div>> " + safeMessage + "</div>";
-        
-        // Auto-scroll
         panel.scrollTop = panel.scrollHeight;
     }
 };
 
-    function injectTranslations() {
-        const m = Blockly.Msg;
-        m["CONTROLS_IF_MSG_IF"] = "if"; m["CONTROLS_IF_MSG_THEN"] = "then"; m["CONTROLS_IF_MSG_ELSE"] = "else";
-        m["LOGIC_COMPARE_TOOLTIP_EQ"] = "is equal to";
-        m["LOGIC_BOOLEAN_TRUE"] = "true"; m["LOGIC_BOOLEAN_FALSE"] = "false";
-        m["CONTROLS_REPEAT_TITLE"] = "repeat %1 times"; m["CONTROLS_REPEAT_INPUT_DO"] = "do";
-        m["MATH_ADDITION_SYMBOL"] = "+"; m["MATH_NUMBER_TOOLTIP"] = "A number.";
-        m["VARIABLES_SET"] = "set %1 to %2"; m["VARIABLES_GET"] = "%1";
-        m["NEW_VARIABLE"] = "Create variable..."; m["VARIABLES_DEFAULT_NAME"] = "item";
-        m["TEXT_PRINT_TITLE"] = "print %1";
-        m["LOGIC_HUE"] = "210"; m["LOOPS_HUE"] = "120"; m["MATH_HUE"] = "230"; m["VARIABLES_HUE"] = "330";
-    }
+function injectTranslations() {
+    const m = Blockly.Msg;
+    m["CONTROLS_IF_MSG_IF"] = "if"; m["CONTROLS_IF_MSG_THEN"] = "then"; m["CONTROLS_IF_MSG_ELSE"] = "else";
+    m["LOGIC_COMPARE_TOOLTIP_EQ"] = "is equal to";
+    m["LOGIC_BOOLEAN_TRUE"] = "true"; m["LOGIC_BOOLEAN_FALSE"] = "false";
+    m["CONTROLS_REPEAT_TITLE"] = "repeat %1 times"; m["CONTROLS_REPEAT_INPUT_DO"] = "do";
+    m["MATH_ADDITION_SYMBOL"] = "+"; m["MATH_NUMBER_TOOLTIP"] = "A number.";
+    m["VARIABLES_SET"] = "set %1 to %2"; m["VARIABLES_GET"] = "%1";
+    m["NEW_VARIABLE"] = "Create variable..."; m["VARIABLES_DEFAULT_NAME"] = "item";
+    m["TEXT_PRINT_TITLE"] = "print %1";
+    m["CONTROLS_WHILEUNTIL_OPERATOR_WHILE"] = "while";
+    m["CONTROLS_WHILEUNTIL_TITLE_REPEAT"] = "repeat";
+    m["CONTROLS_WHILEUNTIL_INPUT_DO"] = "do";
+    m["MATH_CHANGE_TITLE"] = "change %1 by %2";
+}
 
-    function defineCustomBlocks() {
-        Blockly.defineBlocksWithJsonArray([
-            { "type": "interface_b_init", "message0": "Initialise Interface B", "nextStatement": null, "colour": 20, "style": { "hat": "cap" } },
-            {
-                "type": "interface_b_output",
-                "message0": "Motor %1 Dir %2",
-                "args0": [
-                    { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"],["E","0x10"],["F","0x20"],["G","0x40"],["H","0x80"]] },
-                    { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Reverse","0x95"],["Off","0x90"],["Polarity Left","0x94"],["Polarity Right","0x93"],["Speed 1","0xB0"],["Speed 2","0xB1"],["Speed 3","0xB2"],["Speed 4","0xB3"],["Speed 5","0xB6"],["Speed 6","0xB7"]] }
-                ],
-                "previousStatement": null, "nextStatement": null, "colour": 0
-            },
-            {
-                "type": "interface_b_read",
-                "message0": "read hex data",
-                "output": null,
-                "colour": 20
-            },
-            {
-                "type": "wait_seconds",
-                "message0": "wait %1 seconds",
-                "args0": [{ "type": "field_number", "name": "SEC", "value": 0.1 }],
-                "previousStatement": null, "nextStatement": null, "colour": 120
-            }
-        ]);
-    }
+function defineCustomBlocks() {
+    Blockly.defineBlocksWithJsonArray([
+        { "type": "interface_b_init", "message0": "Initialise Interface B", "nextStatement": null, "colour": 20, "style": { "hat": "cap" } },
+        {
+            "type": "interface_b_output",
+            "message0": "Motor %1 Dir %2",
+            "args0": [
+                { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"],["E","0x10"],["F","0x20"],["G","0x40"],["H","0x80"]] },
+                { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Reverse","0x95"],["Off","0x90"],["Polarity Left","0x94"],["Polarity Right","0x93"],["Speed 1","0xB0"],["Speed 2","0xB1"],["Speed 3","0xB2"],["Speed 4","0xB3"],["Speed 5","0xB6"],["Speed 6","0xB7"]] }
+            ],
+            "previousStatement": null, "nextStatement": null, "colour": 0
+        },
+        { "type": "interface_b_read", "message0": "Read Handshake", "output": null, "colour": 20 },
+        {
+            "type": "wait_seconds",
+            "message0": "wait %1 seconds",
+            "args0": [{ "type": "field_number", "name": "SEC", "value": 0.1 }],
+            "previousStatement": null, "nextStatement": null, "colour": 120
+        },
+        { "type": "interface_b_clear_buffer", "message0": "clear serial buffer", "previousStatement": null, "nextStatement": null, "colour": 20 },
+        { "type": "interface_b_read_19", "message0": "read 19 bytes", "output": null, "colour": 20 },
+        { "type": "stop_button_value", "message0": "STOP BUTTON", "output": "Number", "colour": 0 },
+        { "type": "interface_b_stop_all", "message0": "STOP ALL PORTS", "previousStatement": null, "nextStatement": null, "colour": 0, "style": { "hat": "cap" } },
+        {
+  "type": "port_selector",
+  "message0": "get value for %1 from data %2",
+  "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "PORT",
+      "options": [
+        ["STOP BUTTON", "0"],
+        ["PORT 1", "14"],
+        ["PORT 2", "10"],
+        ["PORT 3", "6"],
+        ["PORT 4", "2"],
+        ["PORT 5", "16"],
+        ["PORT 6", "12"],
+        ["PORT 7", "8"],
+        ["PORT 8", "4"],
+        ["CHECKSUM", "18"]
+      ]
+    },
+    { "type": "input_value", "name": "DATA", "check": "String" }
+  ],
+  "output": "Number",
+  "colour": 230
+}
+    ]);
+}
 
-    function setupBlockly() {
-        injectTranslations();
-        defineCustomBlocks();
+function setupBlockly() {
+    injectTranslations();
+    defineCustomBlocks();
 
-        const toolboxJson = {
-            "kind": "categoryToolbox",
-            "contents": [
-                { "kind": "category", "name": "Interface B", "colour": "20", "contents": [
-                    { "kind": "block", "type": "interface_b_init" },
-                    { "kind": "block", "type": "interface_b_output" },
-                    { "kind": "block", "type": "interface_b_read" },
-                    { "kind": "block", "type": "wait_seconds" }
-                ]},
-                { "kind": "category", "name": "LOGIC", "colour": "210", "contents": [
-                    { "kind": "block", "type": "controls_if" },
-                    { "kind": "block", "type": "logic_compare" }
-                ]},
-                { "kind": "category", "name": "VARIABLES", "custom": "VARIABLE", "colour": "330" },
-                { "kind": "category", "name": "TEXT", "colour": "160", "contents": [
-                    { "kind": "block", "type": "text_print" },
-                    { "kind": "block", "type": "text" }
-                ]}
-            ]
-        };
+    const toolboxJson = {
+        "kind": "categoryToolbox",
+        "contents": [
+            { "kind": "category", "name": "Interface B", "colour": "20", "contents": [
+                { "kind": "block", "type": "interface_b_init" },
+                { "kind": "block", "type": "interface_b_output" },
+                { "kind": "block", "type": "interface_b_read" },
+                { "kind": "block", "type": "interface_b_read_19" },
+                { "kind": "block", "type": "wait_seconds" },
+                { "kind": "block", "type": "stop_button_value" },
+                { "kind": "block", "type": "interface_b_stop_all" },
+                { "kind": "block", "type": "port_selector" }
+            ]},
+            { "kind": "category", "name": "LOOPS", "colour": "120", "contents": [
+                { "kind": "block", "type": "controls_whileUntil" },
+                { "kind": "block", "type": "controls_repeat_ext" }
+            ]},
+            { "kind": "category", "name": "LOGIC", "colour": "210", "contents": [
+                { "kind": "block", "type": "controls_if" },
+                { "kind": "block", "type": "logic_compare" },
+                { "kind": "block", "type": "logic_boolean" }
+            ]},
+            { "kind": "category", "name": "VARIABLES", "custom": "VARIABLE", "colour": "330" },
+            { "kind": "category", "name": "MATH", "colour": "230", "contents": [
+                { "kind": "block", "type": "math_number" },
+                { "kind": "block", "type": "math_arithmetic" },
+                { "kind": "block", "type": "math_change" }
+            ]}
+        ]
+    };
 
-        const workspace = Blockly.inject('blocklyDiv', { toolbox: toolboxJson, sounds: false, renderer: 'geras' });
-        const generator = python.pythonGenerator;
+    const workspace = Blockly.inject('blocklyDiv', { toolbox: toolboxJson, sounds: false, renderer: 'geras' });
+    const generator = python.pythonGenerator;
 
-        // --- GENERATORS ---
-        generator.forBlock['interface_b_init'] = function(block) {
-            return "import serial, time\nif 'ser' not in globals():\n" +
-                   "    ser = serial.Serial('/dev/cu.PL2303G-USBtoUART2420', 9600, timeout=0)\n" +
-                   "    ser.write(b'p\\0###Do you byte, when I knock?$$$')\n" +
-                   "def safe_read():\n" +
-                   "    try:\n" +
-                   "        if 'ser' in globals() and ser.in_waiting >= 31:\n" +
-                   "            raw = ser.read(31)\n" +
-                   "            return raw\n" + 
-                   "        return b''\n" +
-                   "    except: return b''\n";
-        };
+    // --- GENERATORS ---
+    generator.forBlock['interface_b_init'] = () => "import serial, time\nif 'ser' not in globals():\n  ser = serial.Serial('/dev/cu.PL2303G-USBtoUART2420', 9600, timeout=0)\n  ser.write(b'p\\0###Do you byte, when I knock?$$$')\n";
+    generator.forBlock['interface_b_output'] = (block) => {
+        const dir = block.getFieldValue('DIR').replace('0x', '\\x');
+        const out = block.getFieldValue('OUT').replace('0x', '\\x');
+        return `ser.write(b'${dir}${out}')\n`;
+    };
+    generator.forBlock['interface_b_read'] = () => ["ser.read(31) if 'ser' in globals() else b''", 0];
+    generator.forBlock['wait_seconds'] = (block) => `time.sleep(${block.getFieldValue('SEC')})\n`;
+    generator.forBlock['interface_b_clear_buffer'] = () => "if 'ser' in globals(): ser.reset_input_buffer()\n";
+    generator.forBlock['interface_b_read_19'] = function(block) {
+    // Ensure this returns a bytes object, not a string or int
+    const code = "ser.read(19) if ('ser' in globals() and ser.in_waiting >= 19) else b'\\x00'*19";
+    return [code, 0];
+};
+    generator.forBlock['stop_button_value'] = () => ["int.from_bytes(ser.read(19)[0:2], 'big') if 'ser' in globals() else 0", 0];
+    generator.forBlock['interface_b_stop_all'] = () => "if 'ser' in globals():\n  for port in [b'\\x01', b'\\x02', b'\\x04', b'\\x08', b'\\x10', b'\\x20', b'\\x40', b'\\x80']:\n    ser.write(b'\\x90' + port)\n";
+    
+ generator.forBlock['port_selector'] = function(block) {
+  const startIndex = block.getFieldValue('PORT');
+  // We use Order 0 to ensure the variable name is retrieved correctly
+  const dataVar = generator.valueToCode(block, 'DATA', 0) || "b''";
+  
+  let code;
+  if (startIndex === "18") {
+      // Logic for the 1-byte Checksum
+      code = `int(bytes(${dataVar})[18])`;
+  } else {
+      // Logic for 2-byte Ports
+      const start = parseInt(startIndex);
+      const end = start + 2;
+      // We wrap dataVar in bytes() and then slice it [start:end]
+      code = `int.from_bytes(bytes(${dataVar})[${start}:${end}], 'big')`;
+  }
+  
+  return [code, 0];
+};
 
-        generator.forBlock['interface_b_output'] = function(block) {
-            const dir = block.getFieldValue('DIR').replace('0x', '\\x');
-            const out = block.getFieldValue('OUT').replace('0x', '\\x');
-            return `ser.write(b'${dir}${out}')\n`;
-        };
-
-        generator.forBlock['interface_b_read'] = function(block) {
-            return ["safe_read()", 0];
-        };
-
-        generator.forBlock['wait_seconds'] = function(block) {
-            return `time.sleep(${block.getFieldValue('SEC')})\n`;
-        };
-
-        // --- LISTENERS ---
-        // --- 2. LISTENERS (THE "SILENCE" FIX) ---
-workspace.addChangeListener((event) => {
-    // Only trigger if a block actually changed or moved.
-    // This stops the crash when just clicking the "Wait" block.
-    if (event.type === Blockly.Events.BLOCK_MOVE || 
-        event.type === Blockly.Events.BLOCK_CHANGE || 
-        event.type === Blockly.Events.BLOCK_CREATE || 
-        event.type === Blockly.Events.BLOCK_DELETE) {
-
+    // --- LISTENERS ---
+    workspace.addChangeListener((event) => {
+        if (event.isUiEvent) return;
         try {
             const code = generator.workspaceToCode(workspace);
-            const outputDiv = document.getElementById('pythonOutput');
-            if (outputDiv) {
-                outputDiv.innerText = code;
-            }
-        } catch (e) {
-            console.warn("Live update skipped to prevent crash");
-        }
+            document.getElementById('pythonOutput').innerText = code;
+
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                if (window.backend && workspace.getAllBlocks(false).length > 0) {
+                    const xml = Blockly.Xml.workspaceToDom(workspace);
+                    window.backend.save_blocks(Blockly.Xml.domToText(xml));
+                }
+            }, 1000);
+        } catch (e) { console.debug("Preview pending..."); }
+    });
+
+    // --- BRIDGE ---
+    if (typeof qt !== 'undefined') {
+        new QWebChannel(qt.webChannelTransport, (channel) => {
+            window.backend = channel.objects.backend;
+            setTimeout(() => {
+                window.backend.get_saved_blocks((xmlText) => {
+                    if (xmlText && xmlText.trim()) {
+                        Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), workspace);
+                    }
+                });
+            }, 150);
+        });
     }
-});
 
-        // --- BRIDGE ---
-        if (typeof qt !== 'undefined') {
-            new QWebChannel(qt.webChannelTransport, (channel) => { 
-                window.backend = channel.objects.backend; 
-            });
-        }
+    document.getElementById('btnRun').onclick = () => {
+        if (window.backend) window.backend.execute_python(generator.workspaceToCode(workspace));
+    };
+}
 
-        document.getElementById('btnRun').onclick = () => {
-            if (window.backend) {
-                document.getElementById('consolePanel').innerHTML = "<b>--- Executing ---</b><br>";
-                window.backend.execute_python(generator.workspaceToCode(workspace));
-            }
-        };
+window.onload = setupBlockly;
+
+document.getElementById('btnReset').onclick = () => {
+    if (confirm("Delete everything?")) {
+        Blockly.getMainWorkspace().clear();
+        document.getElementById('pythonOutput').innerText = "";
+        if (window.backend) window.backend.save_blocks("");
     }
-
+};
     window.onload = setupBlockly;
+// --- WORKSPACE STORAGE ---
+function saveWorkspace() {
+    if (window.backend) {
+        const xml = Blockly.Xml.workspaceToDom(Blockly.mainWorkspace);
+        const xmlText = Blockly.Xml.domToText(xml);
+        // We tell Python to save this string to a file (e.g., save.xml)
+        window.backend.save_blocks(xmlText);
+    }
+}
+
+function loadWorkspace(xmlText) {
+    if (xmlText) {
+        const xml = Blockly.Xml.textToDom(xmlText);
+        Blockly.Xml.clearWorkspaceAndLoadFromDom(xml, Blockly.mainWorkspace);
+    }
+}
     </script>
 </body>
 </html>

@@ -9,10 +9,12 @@ from PyQt6.QtCore import QUrl, pyqtSlot, QObject, QThread, pyqtSignal
 
 from interface_b import InterfaceB
 
+# Define the filename for the save file
+SAVE_FILE = "uli_workspace.xml"
+
 class ScriptWorker(QThread):
     finished = pyqtSignal()
     error = pyqtSignal(str)
-    # New signal to carry print messages back to the bridge
     log_signal = pyqtSignal(str)
 
     def __init__(self, code, robot):
@@ -22,15 +24,12 @@ class ScriptWorker(QThread):
 
     def run(self):
         try:
-            # Prepare the environment for the Blockly code
             exec_globals = {
                 'interface': self.robot,
                 'time': time,
                 'serial': serial,
-                # Crucial: print now sends data through the signal
                 'print': lambda msg: self.log_signal.emit(str(msg))
             }
-            
             time.sleep(0.1)
             exec(self.code, exec_globals)
         except Exception as e:
@@ -39,7 +38,6 @@ class ScriptWorker(QThread):
             self.finished.emit()
 
 class Bridge(QObject):
-    # This signal is the "Safe Passage" for text from the worker to the UI
     ui_log_requested = pyqtSignal(str)
 
     def __init__(self, robot, browser_page):
@@ -47,26 +45,39 @@ class Bridge(QObject):
         self.robot = robot
         self.browser_page = browser_page
         self.worker = None
-        # Connect the internal signal to the actual UI updater
         self.ui_log_requested.connect(self._do_web_log)
 
     def _do_web_log(self, message):
-        """This function now safely runs on the MAIN THREAD."""
         safe_msg = repr(str(message))
         self.browser_page.runJavaScript(f"window.logToConsole({safe_msg});")
+
+    # --- NEW: SAVE BLOCKS TO FILE ---
+    @pyqtSlot(str)
+    def save_blocks(self, xml_text):
+        try:
+            with open(SAVE_FILE, "w") as f:
+                f.write(xml_text)
+        except Exception as e:
+            print(f"Error saving workspace: {e}")
+
+    # --- NEW: GET SAVED BLOCKS (Called when JS starts) ---
+    @pyqtSlot(result=str)
+    def get_saved_blocks(self):
+        if os.path.exists(SAVE_FILE):
+            try:
+                with open(SAVE_FILE, "r") as f:
+                    return f.read()
+            except Exception as e:
+                print(f"Error loading workspace: {e}")
+        return ""
 
     @pyqtSlot(str)
     def execute_python(self, code):
         if self.worker and self.worker.isRunning():
             return
-
-        # Initialize the worker
         self.worker = ScriptWorker(code, self.robot)
-        
-        # Connect worker signals to the bridge
         self.worker.log_signal.connect(self.ui_log_requested.emit)
         self.worker.error.connect(lambda err: self.ui_log_requested.emit(f"System Error: {err}"))
-        
         self.worker.start()
 
 class AppWindow(QMainWindow):
