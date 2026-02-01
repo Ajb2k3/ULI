@@ -17,3 +17,7 @@ Download and extract all the files into a folder called ULI.
 navigate to the src folder and run python3 main.py to start the ULI.
 
 I've hit a block with this that i'm calling the Admaril Ackbar fault because the next stage triggers an "It's a Trap" fault in OSX.
+
+## Update 01 - Febuary - 2026 
+
+You can view and example of it running here - https://youtube.com/shorts/FvEhMnCWDJY?feature=share
