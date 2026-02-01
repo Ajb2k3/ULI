@@ -25,12 +25,12 @@ You can view and example of it running here - https://youtube.com/shorts/FvEhMnC
 ## RPI installation
 
 Run the following commands on the RPI:
-
+```
 Sudo apt get update and sudo apt upgrade
 run sudo apt install nodejs npm
 pip3 install pyqt6
 pip3 install pyserial
 mkdir ULI
 sudo git clone https://github.com/Ajb2k3/ULI.git
-
+```
 Navigate to folder.
