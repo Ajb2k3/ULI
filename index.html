@@ -17,9 +17,8 @@
         #blocklyDiv { flex: 1; height: 100%; position: relative; }
         #sidebar { width: 380px; background: #ecf0f1; border-left: 1px solid #bdc3c7; display: flex; flex-direction: column; }
         #pythonOutput { flex: 1; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; background: white; white-space: pre-wrap; overflow: auto; border-bottom: 1px solid #ccc; }
-        #consolePanel { height: 200px; padding: 12px; background: #2f3640; color: #44bd32; font-family: monospace; font-size: 11px; overflow-y: auto; }
+        #consolePanel { height: 250px; padding: 12px; background: #2f3640; color: #44bd32; font-family: monospace; font-size: 11px; overflow-y: auto; border-top: 2px solid #1a252f; }
 
-        /* Multi-Interface UI Styling */
         .interface-panel { display: flex; flex-direction: column; gap: 5px; background: #2c3e50; padding: 8px; border-radius: 6px; border: 1px solid #444; margin-right: 15px; }
         .interface-row { display: flex; gap: 8px; align-items: center; }
         .iface-name { width: 80px; background: #1a252f; color: white; border: 1px solid #27ae60; border-radius: 3px; padding: 3px; font-size: 11px; text-align: center; }
@@ -27,8 +26,6 @@
         .action-btn { background: #34495e; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 8px; font-weight: bold; }
         .action-btn:hover { background: #27ae60; }
         .remove-btn { background: #c0392b; }
-        
-        .blocklyTrash { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -36,10 +33,9 @@
     <div id="header">
         <div style="display:flex; align-items: center;">
             <strong style="margin-right: 20px;">{ULI} PRO</strong>
-            
             <div class="interface-panel" id="interfaceContainer">
                 <div class="interface-row">
-                    <input type="text" class="iface-name" value="IFACE_1" title="Reference name for Blockly">
+                    <input type="text" class="iface-name" value="IFACE_1">
                     <select class="iface-port"></select>
                     <button class="action-btn" onclick="addInterfaceRow()">+</button>
                 </div>
@@ -49,7 +45,7 @@
 
         <div style="display: flex; gap: 10px; align-items: center;">
             <button id="btnRun">RUN SCRIPT</button>
-            <button id="btnReset" style="padding: 10px 15px; background: #c0392b; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">NEW</button>
+            <button id="btnReset">NEW</button>
             <button onclick="downloadProject()" style="background-color: #ff9800; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Backup</button>
             <input type="file" id="fileInput" style="display:none;" onchange="importProject(event)">
             <button onclick="document.getElementById('fileInput').click()" style="background-color: #607d8b; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Restore</button>
@@ -67,19 +63,85 @@
     </div>
 
     <script>
-// --- 1. GLOBAL VARIABLES & CORE PATCHES ---
 let workspace;
 let generator;
-let saveTimer = null;
 let cachedPorts = [];
 
+// Stability Patch for older browser environments
 const originalReplace = String.prototype.replace;
 String.prototype.replace = function(search, replace) {
     if (this == null) return ""; 
     return originalReplace.apply(String(this), arguments);
 };
 
-// --- 2. MULTI-INTERFACE LOGIC ---
+// --- CORE UTILITIES ---
+
+function injectTranslations() {
+    const m = Blockly.Msg;
+    m["CONTROLS_IF_MSG_IF"] = "if"; m["CONTROLS_IF_MSG_THEN"] = "then"; m["CONTROLS_IF_MSG_ELSE"] = "else";
+    m["LOGIC_COMPARE_TOOLTIP_EQ"] = "is equal to";
+    m["LOGIC_BOOLEAN_TRUE"] = "true"; m["LOGIC_BOOLEAN_FALSE"] = "false";
+    m["CONTROLS_REPEAT_TITLE"] = "repeat %1 times"; 
+    m["CONTROLS_REPEAT_INPUT_DO"] = "do";
+    m["VARIABLES_SET"] = "set %1 to %2"; m["VARIABLES_GET"] = "%1";
+    m["TEXT_PRINT_TITLE"] = "print %1";
+    m["CONTROLS_WHILEUNTIL_OPERATOR_WHILE"] = "while";
+    m["CONTROLS_WHILEUNTIL_INPUT_DO"] = "do";
+}
+
+window.logToConsole = function(message) {
+    const panel = document.getElementById('consolePanel');
+    if (panel) {
+        const div = document.createElement('div');
+        div.style.borderBottom = "1px solid #3d444d";
+        div.style.padding = "2px 0";
+        div.innerText = "> " + message;
+        panel.appendChild(div);
+        panel.scrollTop = panel.scrollHeight;
+    }
+};
+
+// --- FILE MANAGEMENT ---
+
+function downloadProject() {
+    const xml = Blockly.Xml.workspaceToDom(workspace);
+    const xmlText = Blockly.Xml.domToText(xml);
+    const blob = new Blob([xmlText], {type: 'text/xml'});
+    const a = document.createElement('a');
+    a.download = 'uli_project.xml';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    logToConsole("Project exported to file.");
+}
+
+function importProject(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const xmlText = e.target.result;
+        try {
+            workspace.clear();
+            const xml = Blockly.utils.xml.textToDom(xmlText);
+            Blockly.Xml.domToWorkspace(xml, workspace);
+            if (window.backend && window.backend.save_blocks) window.backend.save_blocks(xmlText);
+            logToConsole("Project imported successfully.");
+        } catch (err) {
+            logToConsole("Import Error: " + err);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function resetWorkspace() {
+    if (confirm("Clear all blocks?")) {
+        workspace.clear();
+        logToConsole("Workspace cleared.");
+    }
+}
+
+// --- PORT & INTERFACE LOGIC ---
+
 function refreshPorts() {
     if (window.backend && window.backend.get_serial_ports) {
         window.backend.get_serial_ports((ports) => {
@@ -104,11 +166,7 @@ function addInterfaceRow() {
     const newRow = document.createElement('div');
     newRow.className = 'interface-row';
     newRow.style.marginTop = "5px";
-    newRow.innerHTML = `
-        <input type="text" class="iface-name" value="IFACE_${index}">
-        <select class="iface-port"></select>
-        <button class="action-btn remove-btn" onclick="this.parentElement.remove()">-</button>
-    `;
+    newRow.innerHTML = `<input type="text" class="iface-name" value="IFACE_${index}"><select class="iface-port"></select><button class="action-btn remove-btn" onclick="this.parentElement.remove()">-</button>`;
     container.appendChild(newRow);
     refreshPorts();
 }
@@ -116,15 +174,12 @@ function addInterfaceRow() {
 function getInterfaceMapping() {
     const rows = document.querySelectorAll('.interface-row');
     let map = {};
-    rows.forEach(row => {
-        const name = row.querySelector('.iface-name').value;
-        const port = row.querySelector('.iface-port').value;
-        map[name] = port;
-    });
+    rows.forEach(row => { map[row.querySelector('.iface-name').value] = row.querySelector('.iface-port').value; });
     return map;
 }
 
-// --- 3. BLOCK DEFINITIONS (REWRITTEN FOR MULTI-ID) ---
+// --- BLOCK DEFINITIONS ---
+
 function defineCustomBlocks() {
     Blockly.defineBlocksWithJsonArray([
         {
@@ -144,16 +199,25 @@ function defineCustomBlocks() {
             "previousStatement": null, "nextStatement": null, "colour": 0
         },
         {
-            "type": "interface_b_read_19",
-            "message0": "[%1] read data packet",
+            "type": "interface_b_read",
+            "message0": "[%1] Read Handshake",
             "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }],
             "output": null, "colour": 20
         },
         {
-            "type": "wait_seconds",
-            "message0": "wait %1 seconds",
-            "args0": [{ "type": "field_number", "name": "SEC", "value": 0.1 }],
-            "previousStatement": null, "nextStatement": null, "colour": 120
+            "type": "interface_b_read_19",
+            "message0": "[%1] Read Data Packet",
+            "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }],
+            "output": null, "colour": 20
+        },
+        {
+            "type": "temp_sensor",
+            "message0": "temp at %1 from %2 °C",
+            "args0": [
+                { "type": "field_dropdown", "name": "PORT", "options": [["PORT 1", "14"], ["PORT 2", "10"], ["PORT 3", "6"], ["PORT 4", "2"]] },
+                { "type": "input_value", "name": "DATA", "check": "String" }
+            ],
+            "output": "Number", "colour": 60
         },
         {
             "type": "port_selector",
@@ -163,47 +227,49 @@ function defineCustomBlocks() {
                 { "type": "input_value", "name": "DATA", "check": "String" }
             ],
             "output": "Number", "colour": 230
+        },
+        {
+            "type": "wait_seconds",
+            "message0": "wait %1 seconds",
+            "args0": [{ "type": "field_number", "name": "SEC", "value": 0.1 }],
+            "previousStatement": null, "nextStatement": null, "colour": 120
         }
     ]);
 }
 
 function setupBlockly() {
+    injectTranslations();
     defineCustomBlocks();
+    
     const toolboxJson = {
         "kind": "categoryToolbox",
         "contents": [
-            { "kind": "category", "name": "INTERFACES", "colour": "20", "contents": [
+            { "kind": "category", "name": "HARDWARE", "colour": "20", "contents": [
                 { "kind": "block", "type": "interface_b_init" },
                 { "kind": "block", "type": "interface_b_output" },
+                { "kind": "block", "type": "interface_b_read" },
                 { "kind": "block", "type": "interface_b_read_19" },
+                { "kind": "block", "type": "temp_sensor" },
                 { "kind": "block", "type": "port_selector" },
                 { "kind": "block", "type": "wait_seconds" }
             ]},
             { "kind": "category", "name": "LOOPS", "colour": "120", "contents": [{ "kind": "block", "type": "controls_repeat_ext" }, { "kind": "block", "type": "controls_whileUntil" }]},
-            { "kind": "category", "name": "LOGIC", "colour": "210", "contents": [{ "kind": "block", "type": "controls_if" }, { "kind": "block", "type": "logic_compare" }]},
+            { "kind": "category", "name": "LOGIC", "colour": "210", "contents": [{ "kind": "block", "type": "controls_if" }, { "kind": "block", "type": "logic_compare" }, { "kind": "block", "type": "logic_boolean" }]},
+            { "kind": "category", "name": "TEXT", "colour": "160", "contents": [{ "kind": "block", "type": "text" }, { "kind": "block", "type": "text_print" }]},
             { "kind": "category", "name": "VARIABLES", "custom": "VARIABLE", "colour": "330" },
             { "kind": "category", "name": "MATH", "colour": "230", "contents": [{ "kind": "block", "type": "math_number" }, { "kind": "block", "type": "math_arithmetic" }]}
         ]
     };
 
-    workspace = Blockly.inject('blocklyDiv', { 
-        toolbox: toolboxJson, sounds: true, renderer: 'geras', media: 'media/', trashcan: true,
-        zoom: { controls: true, wheel: true, startScale: 1.0 }
-    });
-    
+    workspace = Blockly.inject('blocklyDiv', { toolbox: toolboxJson, sounds: true, renderer: 'geras', media: 'media/', trashcan: true });
     generator = python.pythonGenerator;
 
-    // --- PRO GENERATORS ---
+    // Generators
     generator.forBlock['interface_b_init'] = (block) => {
         const name = block.getFieldValue('NAME');
         const mapping = getInterfaceMapping();
         const port = mapping[name] || "/dev/ttyUSB0";
-        return `if 'ifaces' not in globals(): ifaces = {}\n` +
-               `if '${name}' not in ifaces:\n` +
-               `    import serial, time\n` +
-               `    ifaces['${name}'] = serial.Serial('${port}', 9600, timeout=0)\n` +
-               `    ifaces['${name}'].write(b'p\\0###Do you byte, when I knock?$$$')\n` +
-               `    time.sleep(0.1)\n`;
+        return `if 'ifaces' not in globals(): ifaces = {}\nif '${name}' not in ifaces:\n    import serial, time\n    ifaces['${name}'] = serial.Serial('${port}', 9600, timeout=0)\n    ifaces['${name}'].write(b'p\\0###Do you byte, when I knock?$$$')\n    time.sleep(0.1)\n`;
     };
 
     generator.forBlock['interface_b_output'] = (block) => {
@@ -213,35 +279,55 @@ function setupBlockly() {
         return `if '${name}' in ifaces: ifaces['${name}'].write(b'${dir}${out}')\n`;
     };
 
-    generator.forBlock['interface_b_read_19'] = (block) => {
+    generator.forBlock['interface_b_read'] = (block) => {
         const name = block.getFieldValue('NAME');
-        const code = `ifaces['${name}'].read(19) if ('${name}' in ifaces and ifaces['${name}'].in_waiting >= 19) else b'\\x00'*19`;
-        return [code, 0];
+        return [`ifaces['${name}'].read(31) if '${name}' in ifaces else b''`, 0];
     };
 
-    generator.forBlock['wait_seconds'] = (block) => `import time\ntime.sleep(${block.getFieldValue('SEC')})\n`;
-    
+    generator.forBlock['interface_b_read_19'] = (block) => {
+        const name = block.getFieldValue('NAME');
+        return [`ifaces['${name}'].read(19) if ('${name}' in ifaces and ifaces['${name}'].in_waiting >= 19) else b'\\x00'*19`, 0];
+    };
+
+    generator.forBlock['temp_sensor'] = (block) => {
+        const start = block.getFieldValue('PORT');
+        const data = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
+        return [`round((int.from_bytes(bytes(${data})[${start}:${parseInt(start)+2}], 'big') / 34176.0) * 36.0, 2)`, 0];
+    };
+
     generator.forBlock['port_selector'] = (block) => {
         const start = block.getFieldValue('PORT');
         const data = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
         return [`int.from_bytes(bytes(${data})[${start}:${parseInt(start)+2}], 'big')`, 0];
     };
 
-    // UI Listeners
-    workspace.addChangeListener(() => {
-        const code = generator.workspaceToCode(workspace);
-        document.getElementById('pythonOutput').innerText = code;
+    generator.forBlock['wait_seconds'] = (block) => `import time\ntime.sleep(${block.getFieldValue('SEC')})\n`;
+
+    // Listeners
+    workspace.addChangeListener(() => { 
+        document.getElementById('pythonOutput').innerText = generator.workspaceToCode(workspace); 
+        // Auto-save logic
+        if (window.backend && window.backend.save_blocks) {
+            const xml = Blockly.Xml.workspaceToDom(workspace);
+            window.backend.save_blocks(Blockly.Xml.domToText(xml));
+        }
     });
 
     if (typeof qt !== 'undefined') {
         new QWebChannel(qt.webChannelTransport, (channel) => {
             window.backend = channel.objects.backend;
             refreshPorts();
-            window.backend.get_saved_blocks((xml) => { if(xml) Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xml), workspace); });
+            window.backend.get_saved_blocks((xml) => { 
+                if(xml) {
+                    const dom = Blockly.utils.xml.textToDom(xml);
+                    Blockly.Xml.domToWorkspace(dom, workspace); 
+                }
+            });
         });
     }
 
     document.getElementById('btnRun').onclick = () => { if(window.backend) window.backend.execute_python(generator.workspaceToCode(workspace)); };
+    document.getElementById('btnReset').onclick = resetWorkspace;
 }
 
 window.onload = setupBlockly;
