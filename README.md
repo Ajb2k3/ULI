@@ -22,19 +22,7 @@ I've hit a block with this that i'm calling the Admaril Ackbar fault because the
 
 You can view and example of it running here - https://youtube.com/shorts/FvEhMnCWDJY?feature=share
 
-## RPI installation
+## RPI Trixie installation
 
-Run the following commands on the RPI:
-```
-Sudo apt get update and sudo apt upgrade
-run sudo apt install nodejs npm
-pip3 install PyQt6
-pip3 install pyserial
-mkdir ULI
-sudo git clone https://github.com/Ajb2k3/ULI.git
-```
-Run these steps one and a time and wait as they will take a while.
-Navigate to folder /ULI/ULI/, 
-run 
-
-```python3 main.py```
+Download the zip file to a folder and extract the contents.
+Run the file installer.sh
