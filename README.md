@@ -25,4 +25,8 @@ You can view and example of it running here - https://youtube.com/shorts/FvEhMnC
 ## RPI Trixie installation
 
 Download the zip file to a folder and extract the contents.
-Run the file installer.sh
+chmod the permissions of installer_uli_pro.sh
+Run the file installer_uli_pro.sh
+when finished run python3 main.py
+
+This file sets up the virtual enviroment the RPI needs as well as installs the required dependencies.
