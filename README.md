@@ -16,7 +16,15 @@ There is a file in the source called app.py this is the background server file t
 Download and extract all the files into a folder called ULI.
 navigate to the src folder and run python3 main.py to start the ULI.
 
+## Known BUGS - 
+I do not have a Windows 11 computer and need testers. If you can spare the time please connsider testing and helping.
+Port addressing is a bit of a problem so occasionally the IDE will send commands to the wrong device if multiple are connected to the same computer.
+
 I've hit a block with this that i'm calling the Admaril Ackbar fault because the next stage triggers an "It's a Trap" fault in OSX.
+
+## Update 04 - March - 2026
+Start of inclusion of Bliss' simple RCX python functions from - https://github.com/BlissCA/LegoRcxPy
+
 
 ## Update 01 - Febuary - 2026 
 
