@@ -65,6 +65,10 @@ export const toolbox = {
 	  type: 'interface_b_output' 
 	},
         { 
+	  kind: 'block', 
+	  type: 'interface_b_read' 
+	},
+        { 
 	  kind: 'block',
 	  type: 'interface_b_stop_all' 
 	},

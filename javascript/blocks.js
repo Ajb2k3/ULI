@@ -1,0 +1,14 @@
+Blockly.defineBlocksWithJsonArray([
+    // --- INTERFACE B ---
+    { "type": "interface_b_init", "message0": "Initialise Interface B: %1", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }], "nextStatement": null, "colour": 20, "style": { "hat": "cap" } },
+    { "type": "interface_b_output", "message0": "[%1] Motor %2 Dir %3", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }, { "type": "field_dropdown", "name": "OUT", "options": [["A","0x01"],["B","0x02"],["C","0x04"],["D","0x08"],["E","0x10"],["F","0x20"],["G","0x40"],["H","0x80"]] }, { "type": "field_dropdown", "name": "DIR", "options": [["Forward","0x91"],["Reverse","0x95"],["Off","0x90"]] }], "previousStatement": null, "nextStatement": null, "colour": 0 },
+    { "type": "interface_b_read_19", "message0": "[%1] Read Data Packet", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }], "output": null, "colour": 20 },
+    { "type": "iface_b_touch", "message0": "touch sensor on %1 using %2", "args0": [{ "type": "field_dropdown", "name": "PORT", "options": [["PASSIVE 1", "14"], ["PASSIVE 2", "12"], ["PASSIVE 3", "10"], ["PASSIVE 4", "8"]] }, { "type": "input_value", "name": "DATA", "check": "String" }], "output": "Boolean", "colour": "#f1c40f" },
+
+    // --- RCX ---
+    { "type": "rcx_init", "message0": "Initialise RCX: %1", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }], "nextStatement": null, "colour": "#e67e22", "style": { "hat": "cap" } },
+    { "type": "rcx_sensor_init", "message0": "RCX %1 Set Sensor %2 as %3", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }, { "type": "field_dropdown", "name": "PORT", "options": [["1", "0"], ["2", "1"], ["3", "2"]] }, { "type": "field_dropdown", "name": "TYPE", "options": [["Touch", "1"], ["Light", "3"], ["Temp", "2"], ["Rotation", "4"]] }], "previousStatement": null, "nextStatement": null, "colour": "#e67e22" },
+    { "type": "rcx_update_sensor", "message0": "RCX %1 Update Sensor %2", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }, { "type": "field_dropdown", "name": "PORT", "options": [["1", "0"], ["2", "1"], ["3", "2"]] }], "previousStatement": null, "nextStatement": null, "colour": "#e67e22" },
+    { "type": "rcx_sensor_value", "message0": "RCX %1 Sensor %2 Value", "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }, { "type": "field_dropdown", "name": "PORT", "options": [["1", "0"], ["2", "1"], ["3", "2"]] }], "output": "Number", "colour": "#e67e22" },
+    { "type": "wait_seconds", "message0": "wait %1 seconds", "args0": [{ "type": "field_number", "name": "SEC", "value": 0.1 }], "previousStatement": null, "nextStatement": null, "colour": 120 }
+]);
