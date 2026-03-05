@@ -24,6 +24,8 @@ Cause 2 - Sometimes the IDE will try to run one thread for the python but the py
 
 Does not work in Apple safari as it is missing the Web.serial function.
 
+Only 1 RCX tower can be used as its hard coaded in the functions so far.
+
 ## Update 04 - March - 2026
 Start of inclusion of Bliss' simple RCX python functions from - https://github.com/BlissCA/LegoRcxPy
 
