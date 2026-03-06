@@ -114,6 +114,11 @@ python.pythonGenerator.forBlock['interface_b_read'] = (block) => {
     const code = `ifaces['${name}']['ser'].read(31) if '${name}' in ifaces else b'NO_CONN'`;
     return [code, 0];
 };
+python.pythonGenerator.forBlock['keep_alive'] = (block) => {
+    const name = block.getFieldValue('NAME');
+    // Just like your working script: Direct read of 31 bytes
+    return `ifaces['${name}']['ser'].write(b'\\x02')\n`; 
+};
 
 python.pythonGenerator.forBlock['iface_b_touch'] = (block, generator) => {
     // Get the variable or block connected to the 'DATA' socket

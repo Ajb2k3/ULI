@@ -1,5 +1,13 @@
 Blockly.defineBlocksWithJsonArray([
-// --- PySerial Communication ---
+    {
+        "type": "add_text",
+        "message0": "add text %1",
+        "args0": [{ "type": "input_value", "name": "TEXT", "check": "String" }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 160
+    },
+    // --- PySerial Communication ---
     { 
         "type": "serial_init", 
         "message0": "Initialise Interface B: %1", 
@@ -60,6 +68,14 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }], 
         "output": null, 
         "colour": 20 
+    },
+    {
+        "type": "keep_alive", 
+        "message0": "[%1] Keep connection alive", 
+        "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }], 
+        "previousStatement": null, 
+        "nextStatement": null,
+        "colour": "#f10f0f"  
     },
     { 
         "type": "iface_b_touch", 
