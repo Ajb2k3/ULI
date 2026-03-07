@@ -56,7 +56,8 @@ const toolboxJson = {
         { "kind": "block", "type": "rcx_init" },
         { "kind": "block", "type": "additional_rcx_init" },
         { "kind": "block", "type": "rcx_beep" },
-        { "kind": "block", "type": "rcx_motor_out" },
+        { "kind": "block", "type": "rcx_motor_out_on" },
+        { "kind": "block", "type": "rcx_motor_out_off" },
         { "kind": "block", "type": "rcx_close" }
       ]
     },
@@ -185,6 +186,7 @@ const toolboxJson = {
       "contents": [
         { "kind": "block", "type": "add_text" },
         { "kind": "block", "type": "text" },
+        { "kind": "block", "type": "text_print" },
         { "kind": "block", "type": "text_join" },
         {
           "kind": "block",
