@@ -181,24 +181,24 @@ except Exception as e:
 };
 
 python.pythonGenerator.forBlock['additional_rcx_init'] = (block) => {
-     const name = block.getFieldValue('NAME');
-    // Fetch the port from the sidebar UI mapping
+    const name = block.getFieldValue('NAME');
     const port = getPort(name);
 
     if (!port) {
         return `print("ERROR: No port assigned to RCX ${name} in the sidebar!")\n`;
     }
 
+    // We use the 'name' variable from Blockly as the Python variable name
     return `
 # --- Uses Bliss RCX Lib via Dynamic Port ---
 from legorcx import RCX
 import time, sys
 
 try:
-    rcx = RCX("${port}")
-    print("RCX ${name} INITIALIZED ON ${port}")
+    ${name} = RCX("${port}")
+    print(f"RCX ${name} INITIALIZED ON ${port}")
 except Exception as e:
-    print(f"RCX CONNECTION ERROR: {e}")
+    print(f"RCX CONNECTION ERROR for ${name}: {e}")
 \n`;
 };
 
