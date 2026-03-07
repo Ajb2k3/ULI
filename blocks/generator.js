@@ -160,23 +160,23 @@ python.pythonGenerator.forBlock['iface_b_active'] = (block, generator) => {
 
 python.pythonGenerator.forBlock['rcx_init'] = (block) => {
     const name = block.getFieldValue('NAME');
-    // Fetch the port from the sidebar UI mapping
     const port = getPort(name);
 
     if (!port) {
         return `print("ERROR: No port assigned to RCX ${name} in the sidebar!")\n`;
     }
 
+    // We use the 'name' variable from Blockly as the Python variable name
     return `
 # --- Uses Bliss RCX Lib via Dynamic Port ---
 from legorcx import RCX
 import time, sys
 
 try:
-    rcx = RCX("${port}")
-    print("RCX ${name} INITIALIZED ON ${port}")
+    ${name} = RCX("${port}")
+    print(f"RCX ${name} INITIALIZED ON ${port}")
 except Exception as e:
-    print(f"RCX CONNECTION ERROR: {e}")
+    print(f"RCX CONNECTION ERROR for ${name}: {e}")
 \n`;
 };
 
@@ -204,21 +204,30 @@ except Exception as e:
 
 
 python.pythonGenerator.forBlock['rcx_beep'] = (block) => {
+    const name = block.getFieldValue('NAME');
+    const rcxsound = block.getFieldValue('rsnd');
     
-    const rcxsound = block.getFieldValue('rsnd')
-//    const code = `rcx.snd(1)\n`; 
-    return `rcx.snd(${rcxsound})\n`;
+    // Uses the dynamic variable name defined in the init block
+    return `${name}.snd(${rcxsound})\n`;
 };
 python.pythonGenerator.forBlock['rcx_close'] = (block) => {
-    const code = `rcx.close()\n`; 
-    return code;
+    const name = block.getFieldValue('NAME');
+    return `${name}.close()\n`; 
 };
-python.pythonGenerator.forBlock['rcx_motor_out'] = (block) => {
-    const rcxmp = block.getFieldValue('MPORT'); // e.g., "rcx.A"
-    return `rcx.mot(${rcxmp})\n`;
+python.pythonGenerator.forBlock['rcx_motor_out_on'] = (block) => {
+    const name = block.getFieldValue('NAME');   // e.g., "rcx_1"
+    const rcxmp = block.getFieldValue('MPORT'); // e.g., "A"
+    
+    // This constructs: rcx_1.mot(rcx_1.A)
+    return `${name}.mot(${name}.${rcxmp}).on()\n`;
 };
-
-
+python.pythonGenerator.forBlock['rcx_motor_out_off'] = (block) => {
+    const name = block.getFieldValue('NAME');   // e.g., "rcx_1"
+    const rcxmp = block.getFieldValue('MPORT'); // e.g., "A"
+    
+    // This constructs: rcx_1.mot(rcx_1.A)
+    return `${name}.mot(${name}.${rcxmp}).off()\n`;
+};
 
 
 

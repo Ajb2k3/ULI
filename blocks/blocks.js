@@ -144,9 +144,10 @@ Blockly.defineBlocksWithJsonArray([
     },
     {
         "type": "rcx_beep", 
-        "message0": "RCX Sound %1 play",
+        "message0": "[%1] RCX Sound %2 play",
         "args0":[
-            {"type": "field_dropdown", "name": "rsnd", "options": [["Click", "0"], ["Beep", "1"], ["Sweep Down", "2"], ["Sweep Up", "3"], ["Error", "4"], ["Fast Sweep", "5"]] },
+            { "type": "field_input", "name": "NAME", "text": "IFACE_1" }, 
+            { "type": "field_dropdown", "name": "rsnd", "options": [["Click", "0"], ["Beep", "1"], ["Sweep Down", "2"], ["Sweep Up", "3"], ["Error", "4"], ["Fast Sweep", "5"]] },
         ],
         "previousStatement": null,
         "nextStatement": null, 
@@ -154,22 +155,36 @@ Blockly.defineBlocksWithJsonArray([
     },
     {
         "type": "rcx_close", 
-        "message0": "RCX.close()",
+        "message0": "[%1].close()",
+        "args0":[
+            { "type": "field_input", "name": "NAME", "text": "IFACE_1" },
+        ],
         "previousStatement": null,
         "nextStatement": null, 
         "colour": "#f1c40f", 
     },
     { 
-        "type": "rcx_motor_out", 
-        "message0": " Set Motor %1 On", 
+        "type": "rcx_motor_out_on", 
+        "message0": " [%1] Set Motor %2 On", 
         "args0": [ 
-            { "type": "field_dropdown", "name": "MPORT", "options": [["A", "rcx.A"], ["B", "rcx.B"], ["C", "rcx.C"]] }, 
+            { "type": "field_input", "name": "NAME", "text": "rcx_1" },
+            { "type": "field_dropdown", "name": "MPORT", "options": [["A", "A"], ["B", "B"], ["C", "C"]] }, 
         ], 
         "previousStatement": null, 
         "nextStatement": null, 
         "colour": "#f1c40f" 
     },
- 
+    { 
+        "type": "rcx_motor_out_off", 
+        "message0": " [%1] Set Motor %2 Off", 
+        "args0": [ 
+            { "type": "field_input", "name": "NAME", "text": "rcx_1" },
+            { "type": "field_dropdown", "name": "MPORT", "options": [["A", "A"], ["B", "B"], ["C", "C"]] }, 
+        ], 
+        "previousStatement": null, 
+        "nextStatement": null, 
+        "colour": "#f1c40f" 
+    },
 
     // --- UTILS ---
   { 
