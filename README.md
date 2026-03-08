@@ -3,9 +3,9 @@
 This archive is for my Work In Progress version of Google Blockly designed to allow the reuse of older Lego computer controlled devices.
 I am currently working on the lego Dacta Interface B as this has the simplest of control software to run.
 
-Installation instructions.
+# Installation instructions.
 Before installation, the host computer will need to have NPM, Node.js, pyserial, pyQT6 installed along with the latest version of Python.
-
+To install these dependenceis run Win11_install.py for windows or install_uli_pro.sh for linux.
 
 
 There is a file in the source called app.py this is the background server file that handles the communication between hardware and blockly which need to be run first and so the actual starting instructions for later versions of {ULI} are as follows.
