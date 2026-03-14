@@ -23,7 +23,22 @@ Blockly.defineBlocksWithJsonArray([
         "previousStatement": null,  
         "colour": 0, 
     },
-
+    {
+        "type": "clear_output_buffer",
+        "message0": "%1 Clear Output Buffer",
+        "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }],
+        "previousStatement": null, 
+        "nextStatement": null, 
+        "colour": 0,
+    },
+    {
+        "type": "clear_input_buffer",
+        "message0": "%1 Clear Input Buffer",
+        "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }],
+        "previousStatement": null, 
+        "nextStatement": null, 
+        "colour": 0,
+    },
     // --- INTERFACE B ---
     { 
         "type": "interface_b_init", 
@@ -77,11 +92,20 @@ Blockly.defineBlocksWithJsonArray([
         "nextStatement": null,
         "colour": "#f10f0f"  
     },
+      { 
+        "type": "iface_b_stop_button", 
+        "message0": "Stop Button on %1", 
+        "args0": [
+            { "type": "input_value", "name": "DATA", "check": "String" }
+        ], 
+        "output": "Boolean", 
+        "colour": "#f10f0f" 
+    },
     { 
         "type": "iface_b_touch", 
         "message0": "Touch sensor on %1 using %2", 
         "args0": [
-            { "type": "field_dropdown", "name": "PORT", "options": [["PASSIVE 1", "14"], ["PASSIVE 2", "12"], ["PASSIVE 3", "10"], ["PASSIVE 4", "8"]] }, 
+            { "type": "field_dropdown", "name": "PORT", "options": [["PASSIVE 1", "14"], ["PASSIVE 2", "10"], ["PASSIVE 3", "6"], ["PASSIVE 4", "2"]] }, 
             { "type": "input_value", "name": "DATA", "check": "String" }
         ], 
         "output": "Boolean", 

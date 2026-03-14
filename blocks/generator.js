@@ -38,14 +38,13 @@ if 'ifaces' not in globals(): globals()['ifaces'] = {}
 if '${name}' in ifaces and ifaces['${name}']:
     try: ifaces['${name}']['ser'].close()
     except: pass
-
 try:
     # Try to connect. If it fails (port busy), wait a moment and try one more time.
     try:
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=0), 'seq': 0x00}
+        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=1), 'seq': 0x00}
     except serial.SerialException:
         time.sleep(0.5)
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=0), 'seq': 0x00}
+        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=1), 'seq': 0x00}
         
     ifaces['${name}']['ser'].write(b'p\\0###Do you byte, when I knock?$$$')
     time.sleep(0.2)
@@ -68,14 +67,13 @@ if 'ifaces' not in globals(): globals()['ifaces'] = {}
 if '${name}' in ifaces and ifaces['${name}']:
     try: ifaces['${name}']['ser'].close()
     except: pass
-
 try:
     # Try to connect. If it fails (port busy), wait a moment and try one more time.
     try:
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=0), 'seq': 0x00}
+        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600)}
     except serial.SerialException:
         time.sleep(0.5)
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=0), 'seq': 0x00}
+        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600)}
         
     ifaces['${name}']['ser'].write(b'p\\0###Do you byte, when I knock?$$$')
     time.sleep(0.2)
@@ -101,9 +99,6 @@ python.pythonGenerator.forBlock['interface_b_output'] = (block) => {
 };
 python.pythonGenerator.forBlock['interface_b_read_19'] = (block) => {
     const name = block.getFieldValue('NAME');
-    // 1. We send the keepalive (\x02)
-    // 2. We wait 100ms (to let the 19 bytes arrive at 9600 baud)
-    // 3. We only read if there is data, otherwise we return a "Safe" blank packet
     const code = `ifaces['${name}']['ser'].read(19)`;
     return [code, 0];
 };
@@ -121,13 +116,19 @@ python.pythonGenerator.forBlock['keep_alive'] = (block) => {
 };
 
 python.pythonGenerator.forBlock['iface_b_touch'] = (block, generator) => {
-    // Get the variable or block connected to the 'DATA' socket
     const dataCode = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
-    const portOffset = block.getFieldValue('PORT'); // e.g., "14"
+    const portOffset = block.getFieldValue('PORT');
 
-    // Logic: Look at the packet, find the 2-byte value at the port offset,
-    // and see if it's less than 500 (typical threshold for a pressed sensor)
-    const code = `(int.from_bytes(bytes(${dataCode})[${portOffset}:${parseInt(portOffset)+2}], 'big') < 500)`;
+    // Logic: Simply convert the 2-byte slice into an integer and return it
+    const code = `int.from_bytes(bytes(${dataCode})[${portOffset}:${parseInt(portOffset)+2}], 'big')`;
+    
+    // We return it as ORDER_ATOMIC (0) so it's treated as a single unit
+    return [code, 0];
+};
+// Generator for Interface B's Stop Button
+python.pythonGenerator.forBlock['iface_b_stop_button'] = (block, generator) => {
+    const dataCode = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
+    const code = `int.from_bytes(bytes(${dataCode})[0:1], 'big')`;
     return [code, 0];
 };
 
@@ -135,6 +136,7 @@ python.pythonGenerator.forBlock['wait_seconds'] = (block) => {
     const seconds = block.getFieldValue('SEC') || 0.1;
     return `time.sleep(${seconds})\n`;
 };
+
 // Generator for Yellow Passive Ports
 python.pythonGenerator.forBlock['iface_b_passive'] = (block, generator) => {
     const name = block.getFieldValue('NAME');
@@ -142,7 +144,7 @@ python.pythonGenerator.forBlock['iface_b_passive'] = (block, generator) => {
     const offset = block.getFieldValue('PORT'); 
     
     // Check length (len) before converting (int.from_bytes)
-    const code = `(int.from_bytes(${dataCode}[${offset}:${parseInt(offset)+2}], 'big') if len(${dataCode}) >= 19 else 0)`;
+    const code = `(int.from_bytes(bytes(${dataCode})[${offset}:${parseInt(offset)+2}], 'big')`;
     return [code, 0];
 };
 
@@ -230,48 +232,28 @@ python.pythonGenerator.forBlock['rcx_motor_out_off'] = (block) => {
 };
 
 
+// -------------- Py Serial Functions -------------------
+
+python.pythonGenerator.forBlock['clear_input_buffer'] = (block) => {
+    const name = block.getFieldValue('NAME');   // e.g., "rcx_1"
+    return `ifaces['IFACE_1']['ser'].reset_input_buffer()\n`;
+};
+
+python.pythonGenerator.forBlock['clear_output_buffer'] = (block) => {
+    const name = block.getFieldValue('NAME');   // e.g., "rcx_1"
+    return `ifaces['IFACE_1']['ser'].reset_output_buffer()\n`;
+};
 
 // -------------------------------- Other Stuff I have forgotten --------------------------------
-python.pythonGenerator.forBlock['wait_seconds'] = (block) => {
-    const seconds = block.getFieldValue('SEC') || 0.1;
-    // We split the sleep into 100ms chunks so we can check the kill-switch frequently
-    return `
-for _ in range(int(${seconds} * 10)):
-    if not getattr(sys.modules["__main__"].window.backend, "running", True): break
-    time.sleep(0.1)
-\n`;
-};
-
-// Override the while loop to check the backend status
-python.pythonGenerator.forBlock['controls_whileUntil'] = function(block, generator) {
-  const until = block.getFieldValue('MODE') === 'UNTIL';
-  const condition = generator.valueToCode(block, 'BOOL', python.Order.NONE) || 'False';
-  let branch = generator.statementToCode(block, 'DO');
-  
-  // This is the "Heartbeat" check. If the backend is stopped, the loop breaks instantly.
-  const checkRunning = '  if not getattr(sys.modules["__main__"].window.backend, "running", True):break\n';
-  
-  return 'while ' + (until ? 'not ' : '') + condition + ':\n' + checkRunning + branch;
-};
-
-// Safe Wait: Checks the 'running' flag every 100ms
-python.pythonGenerator.forBlock['wait_seconds'] = (block) => {
-    const seconds = block.getFieldValue('SEC') || 0.1;
-    return `
-for _ in range(int(${seconds} * 10)):
-    if not getattr(sys.modules["__main__"].window.backend, "running", True): break
-    time.sleep(0.1)
-\n`;
-};
 
 // Safe Loop: Checks the 'running' flag every iteration
-python.pythonGenerator.forBlock['controls_whileUntil'] = function(block, generator) {
-  const until = block.getFieldValue('MODE') === 'UNTIL';
-  const condition = generator.valueToCode(block, 'BOOL', python.Order.NONE) || 'False';
-  let branch = generator.statementToCode(block, 'DO');
-  
-  // Python is picky: the line below MUST start with 4 spaces
-  const checkRunning = '  if not getattr(sys.modules["__main__"].window.backend, "running", True): break\n';
-  
-  return 'while ' + (until ? 'not ' : '') + condition + ':\n' + checkRunning + branch;
-};
+//python.pythonGenerator.forBlock['controls_whileUntil'] = function(block, generator) {
+//  const until = block.getFieldValue('MODE') === 'UNTIL';
+//  const condition = generator.valueToCode(block, 'BOOL', python.Order.NONE) || 'False';
+//  let branch = generator.statementToCode(block, 'DO');
+//  
+//  // Python is picky: the line below MUST start with 4 spaces
+//  const checkRunning = '  if not getattr(sys.modules["__main__"].window.backend, "running", True): break\n';
+//  
+//  return 'while ' + (until ? 'not ' : '') + condition + ':\n' + checkRunning + branch;
+//};
