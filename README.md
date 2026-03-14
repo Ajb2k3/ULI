@@ -14,13 +14,6 @@ Download and extract all the files into a folder called ULI.
 navigate to the src folder and run python3 main.py to start the ULI.
 
 ## Known BUGS - 
-I do not have a Windows 11 computer and need testers. If you can spare the time please connsider testing and helping.
-Port addressing is a bit of a problem so occasionally the IDE will send commands to the wrong device if multiple are connected to the same computer.
-
-I've hit a block with this that i'm calling the Admaril Ackbar fault because the next stage triggers an "It's a Trap" fault in OSX.
-Ok so there are 2 causes of this fault.
-Cause 1 - If the port is opened by the IDE and then the code tries to open the port then instant crash ( the reason there is no connect button)
-Cause 2 - Sometimes the IDE will try to run one thread for the python but the python code will try to start another. I should have solved this but it may randomly re-appear.
 
 Does not work in Apple safari as it is missing the Web.serial function.
 
