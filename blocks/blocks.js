@@ -92,15 +92,24 @@ Blockly.defineBlocksWithJsonArray([
         "nextStatement": null,
         "colour": "#f10f0f"  
     },
-      { 
+    //{ 
+    //    "type": "iface_b_stop_button", 
+    //    "message0": "Stop Button on %1", 
+    //    "args0": [
+    //        { "type": "input_value", "name": "DATA", "check": "String" }
+    //    ], 
+    //    "output": "Boolean", 
+    //    "colour": "#f10f0f" 
+    //},
+    { 
         "type": "iface_b_stop_button", 
         "message0": "Stop Button on %1", 
-        "args0": [
-            { "type": "input_value", "name": "DATA", "check": "String" }
-        ], 
-        "output": "Boolean", 
-        "colour": "#f10f0f" 
-    },
+        "args0": [{ "type": "field_input", "name": "NAME", "text": "IFACE_1" }],
+        "previousStatement": null, 
+        "nextStatement": null,
+        "colour": "#f10f0f"
+    },    
+
     { 
         "type": "iface_b_touch", 
         "message0": "Touch sensor on %1 using %2", 
@@ -208,6 +217,116 @@ Blockly.defineBlocksWithJsonArray([
         "previousStatement": null, 
         "nextStatement": null, 
         "colour": "#f1c40f" 
+    },
+// ---------- WEDO 1.0 HUB ----------
+
+    {
+    "type": "wedo_motor_move",
+    "message0": "Move WeDo Motor on %1 at power %2",
+    "args0": [
+        {
+        "type": "field_dropdown",
+        "name": "PORT",
+        "options": [
+            ["Port A", "PORT_A"],
+            ["Port B", "PORT_B"]
+        ]
+        },
+        {
+        "type": "input_value",
+        "name": "POWER",
+        "check": "Number"
+        }
+    ],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 160,
+    "tooltip": "Moves the motor at a power level between -127 and 127",
+    "helpUrl": ""
+    },
+
+    {
+    "type": "wedo_light_sensor",
+    "message0": "Read Light Sensor on %1",
+    "args0": [
+        {
+        "type": "field_dropdown",
+        "name": "PORT",
+        "options": [
+            ["Port A", "2"], 
+            ["Port B", "3"]
+        ]
+        }
+    ],
+    "output": "Number",
+    "colour": 230,
+    "tooltip": "Returns the light level from the sensor on the selected port.",
+    "helpUrl": ""
+    },
+    {
+    "type": "wedo_sensor_led",
+    "message0": "Set Light Sensor LED on %1 to %2",
+    "args0": [
+        {
+        "type": "field_dropdown",
+        "name": "PORT",
+        "options": [["Port A", "PORT_A"], ["Port B", "PORT_B"]]
+        },
+        {
+        "type": "field_dropdown",
+        "name": "STATE",
+        "options": [["ON", "127"], ["OFF", "0"]]
+        }
+    ],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 160
+    },
+
+    {
+    "type": "wedo_tilt_sensor",
+    "message0": "Read Tilt Sensor on %1",
+    "args0": [
+        {
+        "type": "field_dropdown",
+        "name": "PORT",
+        "options": [
+            ["Port A", "2"],
+            ["Port B", "3"]
+        ]
+        }
+    ],
+    "output": "Number",
+    "colour": 230,
+    "tooltip": "Returns a value (0-255) based on the tilt direction.",
+    "helpUrl": ""
+    },
+    {
+    "type": "wedo_tilt_direction",
+    "message0": "Tilt Direction on %1",
+    "args0": [
+        {
+        "type": "field_dropdown",
+        "name": "PORT",
+        "options": [
+            ["Port A", "2"],
+            ["Port B", "3"]
+        ]
+        }
+    ],
+    "output": "Number",
+    "colour": 230,
+    "tooltip": "Returns: 0=Flat, 1=Forward, 2=Back, 3=Left, 4=Right",
+    "helpUrl": ""
+    },
+    {
+    "type": "wedo_dashboard",
+    "message0": "Show WeDo Debug Dashboard",
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": 20,
+    "tooltip": "Prints Light, Tilt, and Distance raw values to the console.",
+    "helpUrl": ""
     },
 
     // --- UTILS ---

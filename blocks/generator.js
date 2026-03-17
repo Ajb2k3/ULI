@@ -23,7 +23,7 @@ function getPort(interfaceName) {
     return port || ""; // Return empty string if not found
 }
 
-// --- Interface B Logic ---
+// ----------------------------------------- Interface B Logic -------------------------------------------
 
 
 python.pythonGenerator.forBlock['interface_b_init'] = (block) => {
@@ -57,30 +57,22 @@ except Exception as e:
 
 python.pythonGenerator.forBlock['additional_interface_b_init'] = (block) => {
     const name = block.getFieldValue('NAME');
-    const port = getPort(name); 
+    const port = getPort(name);
 
+    if (!port) {
+        return `print("ERROR: No port assigned to Interface B ${name} in the sidebar!")\n`;
+    }
+
+    // We use the 'name' variable from Blockly as the Python variable name
     return `
-import serial, time, sys
-if 'ifaces' not in globals(): globals()['ifaces'] = {}
 
-# Force release if it exists
-if '${name}' in ifaces and ifaces['${name}']:
-    try: ifaces['${name}']['ser'].close()
-    except: pass
+import serial, time, sys
+
 try:
-    # Try to connect. If it fails (port busy), wait a moment and try one more time.
-    try:
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600)}
-    except serial.SerialException:
-        time.sleep(0.5)
-        ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600)}
-        
-    ifaces['${name}']['ser'].write(b'p\\0###Do you byte, when I knock?$$$')
-    time.sleep(0.2)
-    print("INTERFACE READY")
+    ifaces['${name}'] = {'ser': serial.Serial('${port}', 9600, timeout=1), 'seq': 0x00}
+    print(f"Interface B ${name} INITIALIZED ON ${port}")
 except Exception as e:
-    print(f"HARDWARE ERROR: {e}")
-    ifaces['${name}'] = None
+    print(f"INTERFACE B CONNECTION ERROR for ${name}: {e}")
 \n`;
 };
 
@@ -126,9 +118,17 @@ python.pythonGenerator.forBlock['iface_b_touch'] = (block, generator) => {
     return [code, 0];
 };
 // Generator for Interface B's Stop Button
+//python.pythonGenerator.forBlock['iface_b_stop_button'] = (block, generator) => {
+ //   const dataCode = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
+//    const code = `int.from_bytes(bytes(${dataCode})[0:1], 'big')`;
+//   return [code, 0];
+//};
+
+// Generator for Interface B's Stop Button
 python.pythonGenerator.forBlock['iface_b_stop_button'] = (block, generator) => {
-    const dataCode = generator.valueToCode(block, 'DATA', 0) || "b'\\x00'*19";
-    const code = `int.from_bytes(bytes(${dataCode})[0:1], 'big')`;
+    const name = block.getFieldValue('NAME');
+    const readCode = `ifaces['${name}']['ser'].read(19)`;
+    const code = `int.from_bytes(${readCode}[0:1], 'big')`;
     return [code, 0];
 };
 
@@ -243,6 +243,103 @@ python.pythonGenerator.forBlock['clear_output_buffer'] = (block) => {
     const name = block.getFieldValue('NAME');   // e.g., "rcx_1"
     return `ifaces['IFACE_1']['ser'].reset_output_buffer()\n`;
 };
+
+// -------------------------------- WEDO 1.0 HUB --------------------------------
+python.pythonGenerator.forBlock['wedo_motor_move'] = function(block, generator) {
+  // This part adds the header to the TOP of the file, only once
+  generator.definitions_['import_wedo_hid'] = 
+    'import hid\nimport time\n\ndevice = hid.device()\ndevice.open(0x0694, 0x0003)';
+
+  const port = block.getFieldValue('PORT');
+  const power = generator.valueToCode(block, 'POWER', python.pythonGenerator.ORDER_ATOMIC) || '0';
+  
+  let code = '';
+  if (port === 'PORT_A') {
+    code = `device.write([0x00, 0x40, int(${power}), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])\n`;
+  } else {
+    code = `device.write([0x00, 0x40, 0x00, int(${power}), 0x00, 0x00, 0x00, 0x00, 0x00])\n`;
+  }
+  return code;
+};
+
+python.pythonGenerator.forBlock['wedo_light_sensor'] = function(block, generator) {
+  // Ensure the setup code is at the top of the script
+  generator.definitions_['import_wedo_hid'] = 
+    'import hid\nimport time\n\ndevice = hid.device()\ntry:\n    device.open(0x0694, 0x0003)\nexcept:\n    pass';
+
+  const portIndex = block.getFieldValue('PORT');
+  
+  // device.read(8) returns a list of bytes. 
+  // Index 2 is Port A, Index 3 is Port B.
+  const code = `device.read(8)[${portIndex}]`;
+  
+  return [code, python.pythonGenerator.ORDER_ATOMIC];
+};
+
+python.pythonGenerator.forBlock['wedo_sensor_led'] = function(block, generator) {
+  const port = block.getFieldValue('PORT');
+  const state = block.getFieldValue('STATE');
+  
+  let code = '';
+  if (port === 'PORT_A') {
+    code = `device.write([0x00, 0x40, ${state}, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])\n`;
+  } else {
+    code = `device.write([0x00, 0x40, 0x00, ${state}, 0x00, 0x00, 0x00, 0x00, 0x00])\n`;
+  }
+  return code;
+};
+
+python.pythonGenerator.forBlock['wedo_tilt_sensor'] = function(block, generator) {
+  generator.definitions_['import_wedo_hid'] = 
+    'import hid\nimport time\n\ndevice = hid.device()\ntry:\n    device.open(0x0694, 0x0003)\nexcept:\n    pass';
+
+  const portIndex = block.getFieldValue('PORT');
+  
+  // Reads the 8-byte report and grabs the specific port byte
+  const code = `device.read(8)[${portIndex}]`;
+  
+  return [code, python.pythonGenerator.ORDER_ATOMIC];
+};
+
+python.pythonGenerator.forBlock['wedo_tilt_direction'] = function(block, generator) {
+  // Add the helper function to the top of the Python script
+  generator.definitions_['import_wedo_hid'] = 
+    'import hid\nimport time\n\ndevice = hid.device()\ndevice.open(0x0694, 0x0003)';
+    
+  generator.definitions_['func_get_tilt'] = 
+`def get_tilt_direction(port_idx):
+    raw = device.read(8)[port_idx]
+    if raw < 60: return 1 # Forward
+    if raw > 180: return 2 # Backward
+    if 70 < raw < 100: return 3 # Left
+    if 140 < raw < 170: return 4 # Right
+    return 0 # Flat`;
+
+  const portIndex = block.getFieldValue('PORT');
+  const code = `get_tilt_direction(${portIndex})`;
+  
+  return [code, python.pythonGenerator.ORDER_ATOMIC];
+};
+
+python.pythonGenerator.forBlock['wedo_dashboard'] = function(block, generator) {
+  // Ensure we have the base setup
+  generator.definitions_['import_wedo_hid'] = 
+    'import hid\nimport time\n\ndevice = hid.device()\ndevice.open(0x0694, 0x0003)';
+
+  // The logic reads the full buffer and prints the specific indexes 
+  // where WeDo 1.0 stores Port A and Port B data.
+  const code = 
+`data = device.read(8)
+if data:
+    print(f"--- WeDo Hub Status ---")
+    print(f"Port A Raw: {data[2]}")
+    print(f"Port B Raw: {data[3]}")
+    print(f"Full Packet: {list(data)}")
+    time.sleep(0.5) # Prevent flooding the console
+`;
+  return code;
+};
+
 
 // -------------------------------- Other Stuff I have forgotten --------------------------------
 
