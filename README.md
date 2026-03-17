@@ -4,15 +4,16 @@ This archive is for my Work In Progress version of Google Blockly designed to al
 I am currently working on the lego Dacta Interface B as this has the simplest of control software to run.
 
 # Required Additional software
-NPM,
-Javascript,
-Python 3.14.XXX
-Node.js,
-Pyserial,
-Pyhid,
-PyQt6,
+- NPM,
+- Javascript,
+- Python 3.14.XXX
+- Node.js,
+- Pyserial,
+- Pyhid,
+- PyQt6,
 
-Pyserial is required for communications with the serial devices (Interface B, RCX, Cybermaster, Spybotics)
+Pyserial is required for communications with the serial devices (Interface B, RCX, Cybermaster, Spybotics).
+
 Pyhid is required for the Wedo 1.0 Hub
 
 # Installation instructions.
