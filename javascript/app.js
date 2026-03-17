@@ -43,6 +43,7 @@ const toolboxJson = {
         { "kind": "block", "type": "interface_b_output" },
         { "kind": "block", "type": "interface_b_read" },
         { "kind": "block", "type": "interface_b_read_19" },
+        { "kind": "block", "type": "iface_b_stop_button" }, 
         { "kind": "block", "type": "iface_b_touch" },
         { "kind": "block", "type": "iface_b_passive" },
         { "kind": "block", "type": "iface_b_active" }
@@ -61,6 +62,19 @@ const toolboxJson = {
         { "kind": "block", "type": "rcx_close" }
       ]
     },
+        {
+      "kind": "category",
+      "name": "WeDo 1.0",
+      "colour": "#6c6b67",
+      "contents": [
+        { "kind": "block", "type": "wedo_motor_move" },
+        { "kind": "block", "type": "wedo_light_sensor" },
+        { "kind": "block", "type": "wedo_sensor_led" },
+        { "kind": "block", "type": "wedo_tilt_sensor" },
+        { "kind": "block", "type": "wedo_tilt_direction" },
+        { "kind": "block", "type": "wedo_dashboard" },
+      ]
+    },
     { "kind": "sep" },
     {
       "kind": "category",
@@ -68,6 +82,8 @@ const toolboxJson = {
       "colour": "0",
       "contents": [
         { "kind": "block", "type": "serial_init" },
+        { "kind": "block", "type": "clear_output_buffer" },
+        { "kind": "block", "type": "clear_input_buffer" },
         { "kind": "block", "type": "serial_close" }
       ]
     },
@@ -333,8 +349,17 @@ function initIDE() {
         toolbox: toolboxJson,
         renderer: 'geras',
         media: 'media/', 
-        sounds: true 
+        sounds: true,
+        zoom: {
+          controls: true,   // ← THIS enables the + / – / reset buttons
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        } 
     });
+   
     
 workspace.addChangeListener((event) => {
     // 1. Ignore UI events (clicks, scrolls)
@@ -398,4 +423,27 @@ t.start()
     } catch (e) {
         console.error("Code Generation Error:", e);
     }
+}
+// 1. Save the workspace to a file
+function saveWorkspace() {
+    const state = Blockly.serialization.workspaces.save(workspace);
+    const data = JSON.stringify(state);
+    const blob = new Blob([data], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'uli_logic.json';
+    link.click();
+}
+
+// 2. Load the workspace from a file
+function loadFromFile(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const state = JSON.parse(e.target.result);
+        workspace.clear(); // Optional: clears current blocks before loading
+        Blockly.serialization.workspaces.load(state, workspace);
+    };
+    reader.readAsText(file);
 }
