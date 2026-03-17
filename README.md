@@ -3,6 +3,18 @@
 This archive is for my Work In Progress version of Google Blockly designed to allow the reuse of older Lego computer controlled devices.
 I am currently working on the lego Dacta Interface B as this has the simplest of control software to run.
 
+# Required Additional software
+NPM,
+Javascript,
+Python 3.14.XXX
+Node.js,
+Pyserial,
+Pyhid,
+PyQt6,
+
+Pyserial is required for communications with the serial devices (Interface B, RCX, Cybermaster, Spybotics)
+Pyhid is required for the Wedo 1.0 Hub
+
 # Installation instructions.
 Before installation, the host computer will need to have NPM, Node.js, pyserial, pyQT6 installed along with the latest version of Python.
 To install these dependenceis run Win11_install.py for windows or install_uli_pro.sh for linux.
