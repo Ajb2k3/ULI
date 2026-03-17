@@ -35,7 +35,11 @@
     <div><strong><h1>Universal Legacy Lego IDE</strong></h1></div>
     <div>
         <button onclick="refreshPorts()">Refresh Ports</button>
+        <button id="saveBtn" onclick="saveWorkspace()">Save Blocks</button>
+        <button id="loadBtn" onclick="document.getElementById('fileInput').click()">Load Blocks</button>
+        <input type="file" id="fileInput" style="display:none;" onchange="loadFromFile(event)">
         <button onclick="runPython()" style="background: #28a745;">RUN CODE</button>
+        <button onclick="stopPython()" style="background: #ff0000;">STOP CODE</button>
 	<button onclick="hardReset()" style="background: #dc3545;">Reset Hardware</button>
     </div>
 </header>
